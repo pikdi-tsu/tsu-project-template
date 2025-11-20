@@ -18,22 +18,28 @@ use Modules\System\Http\Controllers\SettingController;
 */
 
 Route::prefix('')->group(function() {
-    Route::get('/', [HomeController::class, 'index'])->name('indexing');
+    Route::get('/', [HomeController::class, 'index'])->name('indexing')->middleware('guest');
     Route::middleware(['web'])->group(function () {
-        Route::get('/login', [LoginController::class, 'index'])->name('loginform');
-        Route::post('/loginaction', [LoginController::class, 'loginaction'])->name('loginaction');
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/loginChance', [LoginController::class, 'loginChance'])->name('loginchance');
-        Route::get('/NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
-        Route::post('/NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');
-        Route::get('/checkbirthday', [LoginController::class, 'checkbirthday']);
-        Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+        Route::get('login/mahasiswa', [LoginController::class, 'indexMahasiswa'])->name('login.mahasiswa')->middleware('guest');
+        Route::get('login/dosen-tendik', [LoginController::class, 'indexDosenTendik'])->name('login.dosen-tendik')->middleware('guest');
+        Route::post('login/mahasiswa', [LoginController::class, 'loginActionMahasiswa'])->name('login.action.mahasiswa');
+        Route::post('login/dosen-tendik', [LoginController::class, 'loginActionDosenTendik'])->name('login.action.dosen-tendik');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('loginChance', [LoginController::class, 'loginChance'])->name('loginchance');
+        Route::get('NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
+        Route::post('NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');
+        Route::get('checkbirthday', [LoginController::class, 'checkbirthday']);
+        Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
         //forgot password
-        Route::get('/ForgotPassword', [LoginController::class, 'forgotPassword'])->name('ForgotPassword.show');
-        Route::post('/ForgotPasswordAction', [LoginController::class, 'ActionSendLink'])->name('ForgotPassword.SendLink');
-        Route::get('/form_ForgotPassword/{params}', [LoginController::class, 'FormForgotPassword'])->name('ForgotPassword.formreset');
-        Route::post('/Action_ForgotPassword/{params}', [LoginController::class, 'ForgotPasswordAction'])->name('ForgotPassword.ActionReset');
+        Route::get('mahasiswa/forgot-password', [LoginController::class, 'forgotPasswordMahasiswa'])->name('forgot_password.mahasiswa')->middleware('guest');
+        Route::post('mahasiswa/forgot-password', [LoginController::class, 'actionSendLinkMahasiswa'])->name('forgot_password.send.mahasiswa');
+        Route::get('dosen-tendik/forgot-password', [LoginController::class, 'forgotPasswordDosenTendik'])->name('forgot_password.dosen_tendik')->middleware('guest');
+        Route::post('dosen-tendik/forgot-password', [LoginController::class, 'actionSendLinkDosenTendik'])->name('forgot_password.send.dosen_tendik');
+        Route::get('reset-password/{type}', [LoginController::class, 'FormForgotPassword'])->name('forgot_password.form_reset')->middleware('guest');
+        Route::post('reset-password/{type}', [LoginController::class, 'ForgotPasswordAction'])->name('forgot_password.action')->middleware('guest');
+//        Route::get('/form_ForgotPassword/{params}', [LoginController::class, 'FormForgotPassword'])->name('ForgotPassword.formreset');
+//        Route::post('/Action_ForgotPassword/{params}', [LoginController::class, 'ForgotPasswordAction'])->name('ForgotPassword.ActionReset');
 
 
         //Setting

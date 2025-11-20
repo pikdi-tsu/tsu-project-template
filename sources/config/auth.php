@@ -41,6 +41,16 @@ return [
             'provider' => 'users',
         ],
 
+        'mahasiswa' => [
+            'driver' => 'session',
+            'provider' => 'mahasiswas',
+        ],
+
+        'dosen_tendik' => [
+            'driver' => 'session',
+            'provider' => 'dosen_tendiks',
+        ],
+
         'api' => [
             'driver' => 'token',
             'provider' => 'users',
@@ -69,6 +79,16 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\User::class,
+        ],
+
+        'mahasiswas' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\UserMahasiswa::class, // <-- Model untuk tabel 'users_mahasiswa'
+        ],
+
+        'dosen_tendiks' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\UserDosenTendik::class, // <-- Model untuk tabel 'users_dosen_tendik'
         ],
 
         // 'users' => [

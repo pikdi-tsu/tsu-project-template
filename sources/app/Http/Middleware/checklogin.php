@@ -18,7 +18,7 @@ class checklogin
 
         if(!Session::has('session')){
             // Session::flash('alert', 'sweetAlert("warning", "Please login to access")');
-            return redirect()->route('loginform')->with('alert',['title' => 'Information !','message' => 'Silahkan Login Terlebih Dahulu !','status' => 'warning']);
+            return redirect()->route('indexing')->with('alert',['title' => 'Information !','message' => 'Silahkan Login Terlebih Dahulu !','status' => 'warning']);
         }
 
         return $next($request);

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
-use Session, Crypt, DB;
+use \Illuminate\Support\Facades\Session, Crypt, DB;
 
 class DashboardController extends Controller
 {

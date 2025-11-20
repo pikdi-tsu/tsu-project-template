@@ -2,11 +2,13 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use App\Models\SiakadMahasiswa;
+use App\Models\SiakadDosenTendik;
 
 if (!function_exists('defaultpassword')) {
     function defaultpassword()
     {
-        return 'Password123';
+        return 'password@123';
     }
 }
 
@@ -20,18 +22,63 @@ if (!function_exists('rupiah')) {
 if (!function_exists('photo_profile')) {
     function photo_profile()
     {
-        $nik = session('session')['user_nik'];
-        $email = session('session')['email'];
+        // Default photo jika tidak ditemukan
         $photo = 'user.png';
-        // $photo = 'avatar.png';
-        $cek = User::where('nik', $nik)->where('email', $email)->first();
-        if ($cek->photo_profile != null) {
-            $photo = $cek->photo_profile;
+
+        // Ambil NIK/NIM dari session (pastikan key-nya sesuai LoginController)
+        // Di LoginController kita set: Session::put('session', ['user_nik' => ...])
+        $sessionData = Session::get('session');
+        $nik = $sessionData['user_nik'] ?? null;
+
+        if (empty($nik)) {
+            return $photo;
+        }
+
+        $profil = null;
+
+        // 1. Cek Guard: Apakah yang login Mahasiswa?
+        if (Auth::guard('mahasiswa')->check()) {
+            // Cari di tabel profil mahasiswa
+            $profil = SiakadMahasiswa::query()->where('nim', $nik)->first();
+        }
+        // 2. Cek Guard: Apakah yang login Dosen/Tendik?
+        elseif (Auth::guard('dosen_tendik')->check()) {
+            // Cari di tabel profil dosen tendik
+            $profil = SiakadDosenTendik::query()->where('nik', $nik)->first();
+        }
+        // 3. Fallback (Jika guard tidak terdeteksi tapi session ada - Legacy Support)
+        else {
+            // Coba cari di Mahasiswa dulu
+            $profil = SiakadMahasiswa::query()->where('nim', $nik)->first();
+            // Kalau gak ketemu, cari di Dosen
+            if (!$profil) {
+                $profil = SiakadDosenTendik::query()->where('nik', $nik)->first();
+            }
+        }
+
+        if ($profil && !empty($profil->photo_profile)) {
+            $photo = $profil->photo_profile;
         }
 
         return $photo;
     }
 }
+
+//if (!function_exists('photo_profile')) {
+//    function photo_profile()
+//    {
+//        $nik = session('session')['user_nik'];
+//        $email = session('session')['email'];
+//        $photo = 'user.png';
+//        // $photo = 'avatar.png';
+//        $cek = User::where('nik', $nik)->where('email', $email)->first();
+//        if ($cek->photo_profile != null) {
+//            $photo = $cek->photo_profile;
+//        }
+//
+//        return $photo;
+//    }
+//}
 
 if (!function_exists('SendEmail')) {
     function SendEmail($email, $nama, $data, $jenis, $subject)

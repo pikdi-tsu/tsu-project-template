@@ -12,12 +12,21 @@
                 <i class="fas fa-sign-in-alt"></i><b> {{ $title }}</b>
             </div>
             <div class="card-body">
-                @if($data->forgotpassword_sendemail==1)
+                @if($data->forgot_password_send_email === 1)
                 <p class="login-box-msg text-bold">Masukan Password Baru</p>
-                <form id="form-forgotpassword" method="POST" action="{{route('ForgotPassword.ActionReset',$params)}}">
+                <form id="form-forgot-password" method="POST" action="{{route('forgot_password.action',['type' => $type])}}">
                     {{ csrf_field() }}
+                    <input type="hidden" name="params" value="{{ $params }}">
                     <input type="hidden" name="email" id="email" value="{{ $data->email }}">
                     <small><code id="warning"></code></small>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" name="email" id="email" value="{{ $data->email }}" readonly>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-envelope"></span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="input-group mb-3">
                         <input type="password" class="form-control" onkeyup="checkPassword()" placeholder="Password"
                             name="password" id="password" required>

@@ -120,7 +120,7 @@
         e.preventDefault();
 
         $.ajax({
-            url: '{{url('checkbirthday')}}',
+            url: '{{url('check-birthday')}}',
             type: 'get',
             data: $('#check_birthday').serialize(),
             beforeSend:function(data) {

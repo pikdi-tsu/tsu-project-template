@@ -32,11 +32,11 @@
                     @for($i = 0; $i < 10; $i++)
                         <div class="card card-primary card-outline">
                             <div class="card-header">
-                                <h5 class="m-0">Featureddd</h5>
+                                <h5 class="m-0">Featured</h5>
                             </div>
                             <div class="card-body">
                                 <h6 class="card-title">Special title treatment</h6>
-
+f
                                 <p class="card-text">With supporting text below as a natural lead-in to additional content.
                                     {{rupiah(50000)}}
                                 </p>

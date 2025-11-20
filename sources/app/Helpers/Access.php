@@ -4,19 +4,23 @@ if(!function_exists('checkmenu'))
 {
 	function checkmenu($modul, $menu)
 	{
-		if(session('admin') == 'admin') return true;
+		if(session('admin') === 'admin') return true;
 
-                $g = session('groupuser')
-                ->where('Modul', $modul)
-                ->where('Menu', $menu)
-                ->first();
+        $groups = session('groupuser');
 
-                if($g)
-                {
-                	return true;
-                }
+        if (!$groups) {
+            return false;
+        }
 
-                return false;
+        $g = $groups->where('Modul', $modul)
+            ->where('Menu', $menu)
+            ->first();
+
+        if($g) {
+            return true;
+        }
+
+        return false;
 	}
 }
 
@@ -24,17 +28,21 @@ if(!function_exists('checkmodul'))
 {
 	function checkmodul($modul)
 	{
-		if(session('admin') == 'admin') return true;
+		if(session('admin') === 'admin') return true;
 
-                $g = session('groupuser')
-                ->where('Modul', $modul)
-                ->first();
+        $groups = session('groupuser');
 
-                if($g)
-                {
-                	return true;
-                }
+        if (!$groups) {
+            return false;
+        }
 
-                return false;
+        $g = $groups->where('Modul', $modul)
+            ->first();
+
+        if($g) {
+            return true;
+        }
+
+        return false;
 	}
 }
