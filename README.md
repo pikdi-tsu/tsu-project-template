@@ -1,78 +1,81 @@
-<p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
+# <div style="text-align: center;"> TSU Project Template <br> (Modular Monolith Edition) </div>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+## 📢 Description
 
-## About Laravel
+Template aplikasi berbasis Laravel yang dikustomisasi dengan pendekatan arsitektur *Modular Monolith*. Proyek ini dirancang untuk mengakomodasi kompleksitas sistem informasi akademik dengan memisahkan logika bisnis berdasarkan domain (Modul), bukan hanya berdasarkan lapisan teknis.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Project Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Proyek ini adalah *boilerplate* yang memindahkan struktur standar Laravel (`app/`) ke dalam direktori kustom `sources/` untuk mendukung skalabilitas jangka panjang.
+Saat ini, aplikasi berjalan menggunakan **koneksi database langsung (Direct DB)** dengan autentikasi lokal berbasis sesi. Namun, arsitektur kode (Service Layer) telah disiapkan untuk transisi menuju implementasi berbasis API (*API-Driven*) di masa mendatang tanpa perlu merombak struktur utama.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🏗️ Struktur Direktori & Arsitektur
 
-## Learning Laravel
+Perbedaan mendasar pada template ini adalah lokasi *core logic*. Direktori `sources/` berfungsi sebagai root namespace utama untuk menggantikan `app/` standar, dengan pembagian sebagai berikut:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```text
+root/
+├── public/assets/      # Aset statis (AdminLTE, Plugins, Custom UI)
+├── sources/            # Direktori Utama Logika Aplikasi
+│   ├── app/            # Logika Global (Shared Controllers, Models, Helpers)
+│   └── Modules/        # Domain-Driven Modules
+│       ├── Admin/      # Modul khusus manajemen Administrator & Konfigurasi
+│       ├── System/     # Modul pengaturan sistem inti
+│       └── Users/      # Modul manajemen pengguna (Dosen, Tendik, Mahasiswa)
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Implementasi ini menggunakan pola nwidart/laravel-modules untuk memastikan setiap domain bisnis terisolasi dengan baik.
 
-## Laravel Sponsors
+## 🛠️ Spesifikasi Teknis (Tech Stack)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- Framework Core: Laravel
+- Architecture Pattern: Modular Monolith
+- Database Interface: Eloquent ORM & yajra/laravel-datatables-oracle (Support MySQL & Oracle)
+- Authentication: Custom Local Authentication (Session-based)
+    - Pemisahan logika login untuk user internal (Dosen/Tendik) dan user eksternal (Mahasiswa).
+- Frontend Stack:
+    - Blade Templating Engine
+    - Bootstrap 4 Ecosystem
+    - AdminLTE Assets & Custom Components
+    - Libraries: Select2, Summernote, SweetAlert2, Chart.js
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
-- [Appoly](https://www.appoly.co.uk)
-- [OP.GG](https://op.gg)
+## 🛣️ Roadmap Pengembangan
 
-## Contributing
+Proyek ini dikembangkan dengan peta jalan (roadmap) teknis sebagai berikut:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. Phase 1 (Current): Struktur Modular Monolith, Autentikasi Lokal, Koneksi Database Langsung.
+2. Phase 2: Refactoring Service Layer untuk persiapan abstraksi data.
+3. Phase 3: Transisi ke Arsitektur berbasis API (Headless Readiness).
 
-## Code of Conduct
+## ⚙️ Panduan Instalasi
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal:
+1. Clone & Install Dependencies Pastikan menjalankan dump-autoload agar namespace kustom pada folder sources/ terbaca.
+```bash
+git clone <repository_url>
+composer install
+composer dump-autoload
+```
+2. Konfigurasi Environment Salin file konfigurasi dan atur kredensial database (MySQL/Oracle).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+3. Setup Database & Modules Pastikan modul diaktifkan dan migrasi dijalankan.
+```bash
+php artisan module:enable Admin Users System
+php artisan migrate --seed
+```
+4. Menjalankan Aplikasi
+```bash
+ php artisan serve
+```
 
-## Security Vulnerabilities
+## 📝 Catatan Pengembang
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Namespace: Semua logika inti berada di bawah namespace App\ (untuk sources/app) dan Modules\ (untuk sources/Modules).
+- Assets: Aset publik dikelola secara manual di public/assets dan public/assetsku. Pastikan path aset di file Blade mengarah ke direktori yang benar.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<div style="text-align: center; font-weight: bold"> Pusat Informasi, Komunikasi dan Digital (PIKDI) <br> Tiga Serangkai University </div>
