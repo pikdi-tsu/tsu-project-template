@@ -4,7 +4,7 @@
         <nav class="navbar navbar-expand-lg navbar-light">
           <div class="container">
             <!-- Brand and toggle get grouped for better mobile display -->
-            <a class="navbar-brand logo_h" href="index.html"
+            <a class="navbar-brand logo_h" href="{{ route('indexing') }}"
               ><img src="{{asset('public/assetsku/img/tsu.png')}}" alt=""
             /></a>
             <button

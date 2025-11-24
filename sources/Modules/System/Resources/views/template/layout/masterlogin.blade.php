@@ -31,7 +31,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand-md navbar-light bg-lightblue text-sm">
             <div class="container">
-                <a href="#" class="navbar-brand">
+                <a href="{{ route('indexing') }}" class="navbar-brand">
                     <img src="{{ asset('public/assetsku/img/logotsu.png') }}" alt="AdminLTE Logo" class="brand-image"
                         style="opacity: .8">
                     <span class="brand-text font-weight-light">Tiga Serangkai University</span>
@@ -51,7 +51,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <!-- To the right -->
             <div class="float-right">
             </div>
-            <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong> All rights
+            <strong>Copyright &copy; {{ date('Y') }} <a href="{{ route('indexing') }}">Tiga Serangkai University</a>.</strong> All rights
             reserved.
         </footer>
     </div>
@@ -88,17 +88,66 @@ scratch. This page gets rid of all links and provides the needed markup only.
             });
         }
 
-        $("#password,#a_1,#a_2").keypress(function(event){
-            var ew = event.which;
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('toggle-password');
+        let passwordVisible = false;
+        let visibilityTimeout;
 
-            if(48 <= ew && ew <= 57)
-                return true;
-            if(65 <= ew && ew <= 90)
-                return true;
-            if(97 <= ew && ew <= 122)
-                return true;
-            return false;
+        togglePasswordButton.addEventListener('click', () => {
+            passwordVisible = !passwordVisible;
+            passwordInput.type = passwordVisible ? 'text' : 'password';
+            togglePasswordButton.setAttribute('aria-pressed', passwordVisible);
+            togglePasswordButton.setAttribute('aria-label', passwordVisible ? 'Hide password' : 'Show password');
+            togglePasswordButton.setAttribute('class', passwordVisible ? 'fas fa-unlock-alt' : 'fas fa-lock');
+
+            // Security: Hide password after 5 seconds
+            if (passwordVisible) {
+                visibilityTimeout = setTimeout(() => {
+                    passwordInput.type = 'password';
+                    passwordVisible = false;
+                    togglePasswordButton.setAttribute('aria-pressed', 'false');
+                    togglePasswordButton.setAttribute('aria-label', 'Show password');
+                    togglePasswordButton.setAttribute('class', 'fas fa-lock')
+                }, 5000);
+            } else {
+                clearTimeout(visibilityTimeout);
+            }
         });
+
+        var $alert = $('.alert-danger');
+
+        if ($alert.length) {
+            var text = $alert.text();
+            var match = text.match(/(\d+)/);
+
+            if (match) {
+                var seconds = parseInt(match[0]);
+
+                var timer = setInterval(function() {
+                    seconds--;
+
+                    if (seconds >= 0) {
+                        $alert.text('Silakan coba lagi dalam ' + seconds + ' detik.');
+                    } else {
+                        clearInterval(timer);
+
+                        $alert.removeClass('alert-danger').addClass('alert-info').text('Silakan coba login kembali.');
+                    }
+                }, 1000);
+            }
+        }
+
+        // $("#password,#a_1,#a_2").keypress(function(event){
+        //     var ew = event.which;
+        //
+        //     if(48 <= ew && ew <= 57)
+        //         return true;
+        //     if(65 <= ew && ew <= 90)
+        //         return true;
+        //     if(97 <= ew && ew <= 122)
+        //         return true;
+        //     return false;
+        // });
     </script>
     @yield('script')
 </body>
