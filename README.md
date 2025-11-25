@@ -1,4 +1,4 @@
-# <div style="text-align: center;"> TSU Project Template <br> (Modular Monolith Edition) </div>
+# <p align="center"> TSU Project Template <br> (Modular Monolith Edition) </p>
 
 ## 📢 Description
 
