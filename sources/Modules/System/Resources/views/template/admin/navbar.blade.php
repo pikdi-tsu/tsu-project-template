@@ -49,7 +49,7 @@
             <ul class="dropdown-menu">
                 <!-- User image -->
                 <li class="user-header">
-                    <img src="{{ $user->profile_photo_url }}" style="width: 100px; height: 100px; object-fit: cover; border: 2px solid #adb5bd;" class="img-circle" alt="User Image">
+                    <img src="{{ Auth::user()->profile_photo_url }}" style="width: 100px; height: 100px; object-fit: cover; border: 2px solid #adb5bd;" class="img-circle" alt="User Image">
 
                     <p>
                         {{Auth::user()->name}}

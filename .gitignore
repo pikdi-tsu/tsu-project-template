@@ -21,8 +21,8 @@ sources/.env.production
 sources/auth.json
 
 # > Dependencies (Berat & Ribuan File)
-sources/vendor/
-sources/node_modules/
+sources/vendor
+sources/node_modules
 
 # > Kunci Rahasia SSO/Passport
 sources/storage/*.key

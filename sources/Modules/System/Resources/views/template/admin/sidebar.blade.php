@@ -9,7 +9,7 @@
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
                 {{-- Pastikan helper photo_profile() masih ada, kalau error sementara ganti string path statis --}}
-                <img src="{{ $user->profile_photo_url }}"
+                <img src="{{ Auth::user()->profile_photo_url }}"
                      class="img-circle elevation-2"
                      style="width: 50px; height: 50px; object-fit: cover; border: 1px solid #adb5bd;" alt="User Image">
             </div>
