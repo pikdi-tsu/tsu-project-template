@@ -1,12 +1,46 @@
-# --- SAMPAH OS & IDE ---
+# --- 1. SAMPAH SISTEM OPERASI (Wajib) ---
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- 2. SAMPAH EDITOR / IDE (Ini yang bandel tadi) ---
 .idea
 .vscode
 *.swp
+*.swo
+*.sublime-workspace
 
-# --- PUBLIC FOLDER ---
+# --- 3. BLOKIR KERAS FOLDER 'SOURCES' (Safety Net) ---
+# Kita tulis path lengkap biar Git di Root gak salah paham
+
+# > Keamanan & Environment
+sources/.env
+sources/.env.backup
+sources/.env.production
+sources/auth.json
+
+# > Dependencies (Berat & Ribuan File)
+sources/vendor/
+sources/node_modules/
+
+# > Kunci Rahasia SSO/Passport
+sources/storage/*.key
+sources/storage/oauth-*.key
+
+# > Log & Cache Laravel
+sources/storage/logs/*.log
+sources/storage/framework/views/*.php
+sources/storage/framework/cache/data/*
+sources/storage/framework/sessions/*
+sources/storage/framework/testing/*
+
+# > Lain-lain
+sources/.phpunit.result.cache
+sources/npm-debug.log
+sources/yarn-error.log
+
+# --- 4. FOLDER PUBLIC (Di Luar Sources) ---
 public/storage
-
-# Ignore file hot reload
 public/hot
+public/build
