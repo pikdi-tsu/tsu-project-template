@@ -13,7 +13,9 @@ class DashboardController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('checklogin');
+//        $this->middleware('checklogin');
+        $this->middleware('auth');
+//        $this->middleware('verified');
     }
 
     public function index(){
@@ -21,11 +23,12 @@ class DashboardController extends Controller
         if(Session::has('tmp')){
             Session::forget('tmp');
         }
+
         $data = array(
-            'title' => 'Dashboard',
+            'title' => 'Halaman Dashboard',
             'menu'  => 'dashboard',
         );
-        // dd(session()->all(),);
+//         dd(session()->all());
         return view('system::dashboard/dashboard', $data);
     }
 }
