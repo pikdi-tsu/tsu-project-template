@@ -130,7 +130,7 @@ class QueryDataTable extends DataTableAbstract
     /**
      * Get paginated results.
      *
-     * @return \Illuminate\Support\Collection<int, array>
+     * @return \Illuminate\Support\Collection<int, \stdClass>
      */
     public function results(): Collection
     {
@@ -253,10 +253,14 @@ class QueryDataTable extends DataTableAbstract
 
         // If no modification between the original query and the filtered one has been made
         // the filteredRecords equals the totalRecords
-        if ($this->query == $initialQuery) {
+        if (! $this->skipTotalRecords && $this->query == $initialQuery) {
             $this->filteredRecords ??= $this->totalRecords;
         } else {
             $this->filteredCount();
+
+            if ($this->skipTotalRecords) {
+                $this->totalRecords = $this->filteredRecords;
+            }
         }
     }
 
@@ -926,6 +930,7 @@ class QueryDataTable extends DataTableAbstract
             ->map(fn ($value) => $connection->escape($value));
 
         switch ($driverName) {
+            case 'mariadb':
             case 'mysql':
                 $this->query->orderByRaw("FIELD($keyName, ".$orderedKeys->implode(',').')');
 

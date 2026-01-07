@@ -5,6 +5,9 @@ use Modules\System\Http\Controllers\DashboardController;
 use Modules\System\Http\Controllers\HomeController;
 use Modules\System\Http\Controllers\LoginController;
 use Modules\System\Http\Controllers\SettingController;
+use App\Http\Controllers\SsoController;
+use Modules\System\Http\Controllers\MenuController;
+use Modules\System\Http\Controllers\UserProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,39 +21,45 @@ use Modules\System\Http\Controllers\SettingController;
 */
 
 Route::prefix('')->group(function() {
-    Route::get('/', [HomeController::class, 'index'])->name('indexing')->middleware('guest');
+    Route::get('/', [HomeController::class, 'index'])->name('indexing')->middleware('web', 'guest');
     Route::middleware(['web'])->group(function () {
-        Route::get('login/mahasiswa', [LoginController::class, 'indexMahasiswa'])->name('login.mahasiswa')->middleware('guest');
-        Route::get('login/dosen-tendik', [LoginController::class, 'indexDosenTendik'])->name('login.dosen-tendik')->middleware('guest');
-        Route::post('login/mahasiswa', [LoginController::class, 'loginActionMahasiswa'])->name('login.action.mahasiswa');
-        Route::post('login/dosen-tendik', [LoginController::class, 'loginActionDosenTendik'])->name('login.action.dosen-tendik');
+        Route::get('login', [LoginController::class, 'index'])->name('login')->middleware('guest');
+        Route::post('login', [LoginController::class, 'login'])->name('login.action');
+        Route::get('login/sso', [SsoController::class, 'redirect'])->name('sso.login');
+        Route::get('login/sso/callback', [SsoController::class, 'callback'])->name('sso.callback');
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('loginChance', [LoginController::class, 'loginChance'])->name('loginchance');
-        Route::get('NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
-        Route::post('NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');
-        Route::get('checkbirthday', [LoginController::class, 'checkbirthday']);
+//        Route::get('NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
+//        Route::post('NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');
+//        Route::get('checkbirthday', [LoginController::class, 'checkbirthday']);
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
         //forgot password
-        Route::get('mahasiswa/forgot-password', [LoginController::class, 'forgotPasswordMahasiswa'])->name('forgot_password.mahasiswa')->middleware('guest');
-        Route::post('mahasiswa/forgot-password', [LoginController::class, 'actionSendLinkMahasiswa'])->name('forgot_password.send.mahasiswa');
-        Route::get('dosen-tendik/forgot-password', [LoginController::class, 'forgotPasswordDosenTendik'])->name('forgot_password.dosen_tendik')->middleware('guest');
-        Route::post('dosen-tendik/forgot-password', [LoginController::class, 'actionSendLinkDosenTendik'])->name('forgot_password.send.dosen_tendik');
-        Route::get('reset-password/{type}', [LoginController::class, 'FormForgotPassword'])->name('forgot_password.form_reset')->middleware('guest');
-        Route::post('reset-password/{type}', [LoginController::class, 'ForgotPasswordAction'])->name('forgot_password.action')->middleware('guest');
+//        Route::get('forgot-password', [LoginController::class, 'forgotPassword'])->name('forgot_password')->middleware('guest');
+//        Route::post('forgot-password', [LoginController::class, 'actionSendLink'])->name('forgot_password.send');
+//        Route::get('reset-password', [LoginController::class, 'showResetForm'])->name('forgot_password.form_reset')->middleware('guest');
+//        Route::post('reset-password', [LoginController::class, 'updatePassword'])->name('forgot_password.action')->middleware('guest');
 //        Route::get('/form_ForgotPassword/{params}', [LoginController::class, 'FormForgotPassword'])->name('ForgotPassword.formreset');
 //        Route::post('/Action_ForgotPassword/{params}', [LoginController::class, 'ForgotPasswordAction'])->name('ForgotPassword.ActionReset');
 
+        // Menu
+        Route::prefix('system')->middleware(['web', 'auth'])->name('system.')->group(function() {
+            Route::get('menu/json', [MenuController::class, 'datatable'])->name('menu.json');
+            Route::resource('menu', MenuController::class);
+        });
+
+        // Profile & Password
+        Route::prefix('profile')->middleware(['web', 'auth'])->group(function() {
+            Route::get('/', [UserProfileController::class, 'index'])->name('profile');
+            Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
+            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('profile.update-password');
+        });
 
         //Setting
         Route::prefix('setting')->group(function(){
             //Change Password
-            Route::get('/changepassword', [SettingController::class, 'showChangePassword'])->name('show.changepassword');
-            Route::post('/changepasswordsave', [SettingController::class, 'saveChangePassword'])->name('save.changepassword');
+//            Route::get('/changepassword', [SettingController::class, 'showChangePassword'])->name('show.changepassword');
+//            Route::post('/changepasswordsave', [SettingController::class, 'saveChangePassword'])->name('save.changepassword');
 
-            //Edit Profile
-            Route::get('/changeprofile', [SettingController::class, 'showEditProfile'])->name('show.changeprofile');
-            Route::post('/changeprofilesave', [SettingController::class, 'saveEditProfile'])->name('save.changeprofile');
 
             //User Management
             Route::get('/usermanagement', [SettingController::class, 'userManagement'])->name('show.userManagement');

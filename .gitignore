@@ -1,0 +1,12 @@
+# --- SAMPAH OS & IDE ---
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+
+# --- PUBLIC FOLDER ---
+public/storage
+
+# Ignore file hot reload
+public/hot
