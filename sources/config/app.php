@@ -14,6 +14,34 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'module' => [
+        'name' => env('MODULE_NAME', 'tsu_template'),
+    ],
+
+    // Main Apps
+    'tsu_homebase' => [
+      'url' => env('TSU_SSO_URL'),
+    ],
+
+    // Urutan menentukan prioritas pengecekan.
+    'active_guards' => ['web'],
+
+    // Nama kode role kapital semua (ex: 'DOSEN') atau nama guard (ex: 'mahasiswa')
+    'allowed_roles' => ['MAHASISWA', 'DOSEN', 'TENAGA PENDIDIKAN', 'NO PRIVILEGE', 'ADMIN'],
+
+    // Oauth Authorization Grant
+    'oauth' =>[
+        'authorization_id' => env('TSU_SSO_CLIENT_ID'),
+        'authorization_secret' => env('TSU_SSO_CLIENT_SECRET'),
+        'authorization_redirect' => env('TSU_SSO_REDIRECT_URI')
+    ],
+
+    'pikdi' => [
+        'name' => env('PIKDI_ADMIN_NAME', 'PIKDI TSU'),
+        'username' => env('PIKDI_ADMIN_USERNAME', 'pikditsu'),
+        'email' => env('PIKDI_ADMIN_EMAIL', 'pikdi@tsu.ac.id'),
+        'password' => env('MODULE_NAME', 'tsu_template'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
