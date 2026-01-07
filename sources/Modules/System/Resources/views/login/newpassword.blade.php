@@ -74,7 +74,6 @@
 
                 <button type="button" class="btn btn-default" onclick="showBirth()">Back</button>
                 <button type="submit" class="btn btn-info float-right">Save and Login</button>
-                </div>
             </form>
         </div>
     </div>

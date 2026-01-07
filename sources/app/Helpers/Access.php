@@ -4,7 +4,9 @@ if(!function_exists('checkmenu'))
 {
 	function checkmenu($modul, $menu)
 	{
-		if(session('admin') === 'admin') return true;
+		if(session('admin') === 'admin') {
+            return true;
+        }
 
         $groups = session('groupuser');
 
@@ -28,7 +30,9 @@ if(!function_exists('checkmodul'))
 {
 	function checkmodul($modul)
 	{
-		if(session('admin') === 'admin') return true;
+		if(session('admin') === 'admin') {
+            return true;
+        }
 
         $groups = session('groupuser');
 
