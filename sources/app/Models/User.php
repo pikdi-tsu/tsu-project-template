@@ -43,7 +43,7 @@ class User extends Authenticatable
         $path = $this->profile_photo_path;
 
         if (empty($path)) {
-            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=2d394a';
         }
 
         if (str_starts_with($path, 'http')) {

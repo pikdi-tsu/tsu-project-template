@@ -44,15 +44,15 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                 {{-- <img src="{{ asset('public/assets/dist/img/user2-160x160.jpg') }}" class="user-image" alt="User Image"> --}}
                 <i class="fas fa-users-cog"></i>
-                {{-- <span class="hidden-xs">Hi, {{session('session')['user_nama']}}</span> --}}
+                {{-- <span class="hidden-xs">Hi, {{Auth::user()->name}}</span> --}}
             </a>
             <ul class="dropdown-menu">
                 <!-- User image -->
                 <li class="user-header">
-                    <img src="{{url('sources/storage/app/FILE_PHOTOPROFILE/'.photo_profile())}}" style="width: 100px; height: 100px; object-fit: cover; border: 2px solid #adb5bd;" class="img-circle" alt="User Image">
+                    <img src="{{ $user->profile_photo_url }}" style="width: 100px; height: 100px; object-fit: cover; border: 2px solid #adb5bd;" class="img-circle" alt="User Image">
 
                     <p>
-                        {{session('session')['user_nama']}}
+                        {{Auth::user()->name}}
                         <small> </small>
                     </p>
                 </li>
@@ -61,7 +61,7 @@
                     <form action="{{route('logout')}}" method="POST" id="form-logout">
                         @csrf
                     </form>
-                    <a href="{{route('show.changeprofile')}}" class="btn btn-primary">Profile</a>
+                    <a href="{{route('profile')}}" class="btn btn-primary">Profile</a>
                     <button type="submit" class="btn btn-danger float-right" form="form-logout" style="background-color: red;">Sign out</button>
                 </li>
             </ul>
