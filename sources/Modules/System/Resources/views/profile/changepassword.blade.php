@@ -1,4 +1,4 @@
-@extends('system::template/admin/header')
+@extends('system::template.admin.header')
 @section('title', $title)
 @section('link_href')
 @endsection
@@ -53,24 +53,24 @@
                                     <div class="col-md-4">
                                         <label>Password Lama</label>
                                         <input type="password" class="form-control" name="oldpass" id="oldpass"
-                                            placeholder="Password Lama" required>
+                                               placeholder="Password Lama" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label>Password Baru</label>
                                         <input type="password" class="form-control" name="newpass" id="newpass"
-                                            placeholder="Password Baru" required>
+                                               placeholder="Password Baru" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label>Konfirmasi Password Baru</label>
                                         <input type="password" class="form-control" name="newpass2" id="newpass2"
-                                            placeholder="Konfirmasi Password Baru" required>
+                                               placeholder="Konfirmasi Password Baru" required>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         <div class="card-footer text-right">
                             <a href="{{ route('dashboard') }}" class="btn btn-primary btn-sm mr-2"
-                                id="testing-btn">Kembali</a>
+                               id="testing-btn">Kembali</a>
                             <button type="button" class="btn btn-success btn-sm" id="btn-submit">Simpan</button>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
 
 @section('script')
     <script>
-        $(function() {
+        $(function () {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -163,7 +163,7 @@
             // }
 
             function EventSubmit() {
-                $('#btn-submit').click(function(e) {
+                $('#btn-submit').click(function (e) {
                     e.preventDefault(); // cegah submit langsung
                     let oldpass = $('#oldpass').val()
                     let newpass = $('#newpass').val()

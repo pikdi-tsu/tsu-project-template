@@ -1,4 +1,4 @@
-@extends('system::template/layout/masterlogin')
+@extends('system::template.layout.masterlogin')
 @section('title', $title)
 @section('link_href')
 @endsection
@@ -13,50 +13,49 @@
             </div>
             <div class="card-body">
                 @if($data->forgot_password_send_email === 1)
-                <p class="login-box-msg text-bold">Masukan Password Baru</p>
-                <form id="form-forgot-password" method="POST" action="{{route('forgot_password.action',['type' => $type])}}">
-                    {{ csrf_field() }}
-                    <input type="hidden" name="params" value="{{ $params }}">
-                    <small><code id="warning"></code></small>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" name="email" id="email" value="{{ $data->email }}" readonly>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-envelope"></span>
+                    <p class="login-box-msg text-bold">Masukan Password Baru</p>
+                    <form id="form-forgot-password" method="POST" action="{{route('forgot_password.action')}}">
+                        {{ csrf_field() }}
+                        <input type="hidden" name="token" value="{{ $token }}">
+                        <small><code id="warning"></code></small>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" name="email" id="email" value="{{ $data->email }}"
+                                   readonly>
+                            <div class="input-group-append">
+                                <div class="input-group-text">
+                                    <span class="fas fa-envelope"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="password" class="form-control" onkeyup="checkPassword()" placeholder="Password"
-                            name="password" id="password" required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
+                        <div class="input-group mb-3">
+                            <input type="password" class="form-control" onkeyup="checkPassword()" placeholder="Password" name="password" id="password" required>
+                            <div class="input-group-append">
+                                <div class="input-group-text">
+                                    <span class="fas fa-lock"></span>
+                                </div>
                             </div>
-                        </div>
 
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="password" class="form-control" onkeyup="checkPassword()" placeholder="Ulangi Password"
-                            name="password_retype" id="password_retype" required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="password" class="form-control" onkeyup="checkPassword()" placeholder="Ulangi Password" name="password_retype" id="password_retype" required>
+                            <div class="input-group-append">
+                                <div class="input-group-text">
+                                    <span class="fas fa-lock"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <!-- /.col -->
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-success btn-block">Submit</button>
+                        <div class="row">
+                            <!-- /.col -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-block">Submit</button>
+                            </div>
+                            <!-- /.col -->
                         </div>
-                        <!-- /.col -->
-                    </div>
-                </form>
+                    </form>
                 @else
-                <div class="alert alert-warning text-center text-bold">
-                    Password Sudah Diganti ! <br> Silahkan Login !
-                </div>
+                    <div class="alert alert-warning text-center text-bold">
+                        Password Sudah Diganti ! <br> Silahkan Login !
+                    </div>
                 @endif
             </div>
             <!-- /.card-body -->
@@ -68,7 +67,7 @@
 
 @section('script')
     <script>
-        $(function() {
+        $(function () {
 
         });
 
@@ -111,19 +110,20 @@
 
                     $('#warning').html('*Must contain Letter');
                     $('#submit').attr('disabled', 'disabled');
-                }else if(password === 'password@123'){
+                } else if (password === 'password@123') {
                     $('#password').addClass('is-invalid');
                     $('#password').removeClass('is-valid');
 
                     $('#warning').html('*dont use password this');
                     $('#submit').attr('disabled', 'disabled');
-                }else {
+                } else {
                     $('#password').removeClass('is-invalid');
                     $('#password').addClass('is-valid');
                     $('#warning').html('');
                 }
             }
         }
+
         // $("#password,#password_retype").keypress(function(event) {
         //     var ew = event.which;
         //
