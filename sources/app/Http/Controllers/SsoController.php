@@ -76,25 +76,49 @@ class SsoController extends Controller
 
             $userData = $userResponse->json();
 
-//            $user = User::query()->where('email', $userData['email'])->first();
+            // Filer allowed role
+            $allowedRoles = config('app.allowed_roles', []);
 
-//            if (!$user) {
-                // Update atau Buat User Lokal
-                $user = User::query()->updateOrCreate(
-                    ['id' => $userData['id']],
-                    [
-                        'tsu_homebase_id' => $userData['id'],
-                        'name' => $userData['name'],
-                        'username' => $userData['username'] ?? null,
-                        'nidn' => $userData['nidn'] ?? null,
-                        'email' => $userData['email'],
-                        'password' => null, // Password null karena login via SSO
-                        'unit' => $userData['unit'] ?? null,
-                        'isactive' => $userData['isactive'] ?? true,
-                        'sso_access_token' => $accessToken,
-                    ]
-                );
-//            }
+            if (!empty($allowedRoles)) {
+                $incomingRoles = [];
+                if (!empty($userData['roles']) && is_array($userData['roles'])) {
+                    foreach ($userData['roles'] as $role) {
+                        if (isset($role['name'])) {
+                            $incomingRoles[] = strtolower($role['name']);
+                        }
+                    }
+                }
+
+                $allowedRoles = array_map('strtolower', $allowedRoles);
+
+                // Cek role user dengan whitelist
+                $hasAccess = !empty(array_intersect($incomingRoles, $allowedRoles));
+
+                // PENGECUALIAN SUPER ADMIN
+                $isSuperAdminRole = in_array('super admin', $incomingRoles, true);
+
+                if (!$hasAccess && !$isSuperAdminRole) {
+                    return redirect()->route('login')
+                        ->with('alert', ['title' => 'AKSES DITOLAK', 'message' => 'Role Anda ' . implode(', ', $incomingRoles) . ' tidak diizinkan masuk ke aplikasi ini.', 'status' => 'danger']);
+                }
+            }
+
+            // Update atau Buat User Lokal
+            $user = User::query()->updateOrCreate(
+                ['id' => $userData['id']],
+                [
+                    'tsu_homebase_id' => $userData['id'],
+                    'name' => $userData['name'],
+                    'username' => $userData['username'] ?? null,
+                    'nidn' => $userData['nidn'] ?? null,
+                    'email' => $userData['email'],
+                    'password' => null, // Password null karena login via SSO
+                    'unit' => $userData['unit'] ?? null,
+                    'isactive' => $userData['isactive'] ?? true,
+                    'sso_access_token' => $accessToken,
+                ]
+            );
+
             // Simpan Token di Session
             session(['homebase_access_token' => $accessToken]);
 
