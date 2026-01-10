@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserSyncService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class SsoController extends Controller
     }
 
     // Fungsi Menangkap User + Tukar Token
-    public function callback(Request $request)
+    public function callback(Request $request, UserSyncService $syncer)
     {
         // Cek TSU Homebase error
         if ($request->has('error')) {
@@ -76,85 +77,22 @@ class SsoController extends Controller
 
             $userData = $userResponse->json();
 
-            // Filer allowed role
-            $allowedRoles = config('app.allowed_roles', []);
+            try {
+                // Panggil Service yang SAMA persis
+                $user = $syncer->handle($userData, $accessToken);
 
-            if (!empty($allowedRoles)) {
-                $incomingRoles = [];
-                if (!empty($userData['roles']) && is_array($userData['roles'])) {
-                    foreach ($userData['roles'] as $role) {
-                        if (isset($role['name'])) {
-                            $incomingRoles[] = strtolower($role['name']);
-                        }
-                    }
-                }
+                // Simpan token di session (khas SSO)
+                session(['homebase_access_token' => $accessToken]);
 
-                $allowedRoles = array_map('strtolower', $allowedRoles);
+                Auth::login($user);
 
-                // Cek role user dengan whitelist
-                $hasAccess = !empty(array_intersect($incomingRoles, $allowedRoles));
-
-                // PENGECUALIAN SUPER ADMIN
-                $isSuperAdminRole = in_array('super admin', $incomingRoles, true);
-
-                if (!$hasAccess && !$isSuperAdminRole) {
-                    return redirect()->route('login')
-                        ->with('alert', ['title' => 'AKSES DITOLAK', 'message' => 'Role Anda ' . implode(', ', $incomingRoles) . ' tidak diizinkan masuk ke aplikasi ini.', 'status' => 'danger']);
-                }
+                return redirect()->route('dashboard')
+                    ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
+            } catch (\Exception $e) {
+                // Handle jika role ditolak
+                return redirect()->route('login')
+                    ->with('alert', ['title' => 'AKSES DITOLAK', 'message' => $e->getMessage(), 'status' => 'danger']);
             }
-
-            // Update atau Buat User Lokal
-            $user = User::query()->updateOrCreate(
-                ['id' => $userData['id']],
-                [
-                    'tsu_homebase_id' => $userData['id'],
-                    'name' => $userData['name'],
-                    'username' => $userData['username'] ?? null,
-                    'nidn' => $userData['nidn'] ?? null,
-                    'email' => $userData['email'],
-                    'password' => null, // Password null karena login via SSO
-                    'unit' => $userData['unit'] ?? null,
-                    'isactive' => $userData['isactive'] ?? true,
-                    'sso_access_token' => $accessToken,
-                ]
-            );
-
-            // Simpan Token di Session
-            session(['homebase_access_token' => $accessToken]);
-
-            $rolesToSync = [];
-
-            // Ambil Role dari Kiriman Homebase
-            if (isset($userData['roles']) && is_array($userData['roles'])) {
-                foreach ($userData['roles'] as $rolePayload) {
-                    $roleName = $rolePayload['name'];
-
-                    // Auto-create Role di lokal
-                    Role::query()->firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-
-                    $rolesToSync[] = $roleName;
-                }
-            }
-
-            // Logika Pengaman Super Admin (Email PIKDI)
-            if ($user->email === config('app.pikdi.email')) {
-                $rolesToSync[] = 'super admin';
-                Role::query()->firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
-            }
-
-            // Logika Preservation (Opsional)
-            // Jika user lokal ini sudah punya Super Admin.
-            if ($user->hasRole('super admin')) {
-                $rolesToSync[] = 'super admin';
-            }
-
-            // Eksekusi Sync
-            $user->syncRoles(array_unique($rolesToSync));
-
-            // Login User
-            Auth::login($user);
-
-            return redirect()->route('dashboard')->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
         } catch (ConnectionException $e) {
             // KASUS: HOMEBASE Down
             return response()->view('system::errors.index', [
