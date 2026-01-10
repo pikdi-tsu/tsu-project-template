@@ -44,7 +44,7 @@
                 {{-- BAGIAN 2: MANUAL (Hidden) --}}
                 <div id="manual-section" style="display: none;">
                     <hr>
-                    <p class="text-center text-danger text-sm"><b><i class="fas fa-user-secret"></i> Administrator Access</b></p>
+                    <p class="text-center text-danger text-sm"><b><i class="fas fa-user-secret"></i> PIKDI Access</b></p>
 
                     <form id="form-login" method="POST" action="{{ route('login.action') }}">
                         {{ csrf_field() }}
@@ -67,12 +67,12 @@
 
                         <div class="row">
                             <div class="col-12">
-                                <button type="submit" class="btn btn-dark btn-block btn-sm">Admin Login</button>
+                                <button type="submit" class="btn btn-dark btn-block btn-sm">PIKDI Login</button>
                             </div>
                         </div>
 
                         <div class="mt-2 text-center">
-                            <a href="#" id="btn-close-manual" class="text-xs text-muted">Tutup Akses Admin</a>
+                            <a href="#" id="btn-close-manual" class="text-xs text-muted">Tutup Akses PIKDI</a>
                         </div>
                     </form>
                 </div>

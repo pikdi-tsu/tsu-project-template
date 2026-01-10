@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmergencyLoginController;
 use Illuminate\Support\Facades\Route;
 use Modules\System\Http\Controllers\DashboardController;
 use Modules\System\Http\Controllers\HomeController;
@@ -27,6 +28,9 @@ Route::prefix('')->group(function() {
         Route::post('login', [LoginController::class, 'login'])->name('login.action');
         Route::get('login/sso', [SsoController::class, 'redirect'])->name('sso.login');
         Route::get('login/sso/callback', [SsoController::class, 'callback'])->name('sso.callback');
+        Route::get('/emergency-login', [EmergencyLoginController::class, 'login'])->name('emergency-login');
+        Route::get('/rescue-login', [EmergencyLoginController::class, 'showRescueForm'])->name('rescue');
+        Route::post('/rescue-login', [EmergencyLoginController::class, 'processRescueLogin'])->name('rescue.post');
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 //        Route::get('NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
 //        Route::post('NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');

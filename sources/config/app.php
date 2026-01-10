@@ -26,8 +26,10 @@ return [
     // Urutan menentukan prioritas pengecekan.
     'active_guards' => ['web'],
 
-    // Nama kode role kapital semua (ex: 'DOSEN') atau nama guard (ex: 'mahasiswa')
-    'allowed_roles' => ['MAHASISWA', 'DOSEN', 'TENAGA PENDIDIKAN', 'NO PRIVILEGE', 'ADMIN'],
+    // Allowed Roles
+    'allowed_roles' => env('APP_ALLOWED_ROLES')
+        ? explode(',', env('APP_ALLOWED_ROLES'))
+        : [],
 
     // Oauth Authorization Grant
     'oauth' =>[
@@ -41,6 +43,10 @@ return [
         'username' => env('PIKDI_ADMIN_USERNAME', 'pikditsu'),
         'email' => env('PIKDI_ADMIN_EMAIL', 'pikdi@tsu.ac.id'),
         'password' => env('MODULE_NAME', 'tsu_template'),
+        'key' => [
+            'emergency' => env('PIKDI_EMERGENCY_SECRET', 'pikdiemergency@TSU25'),
+            'rescue' => env('PIKDI_RESCUE_SECRET')
+        ],
     ],
 
     /*
