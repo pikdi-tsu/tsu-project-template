@@ -14,8 +14,10 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+
     'module' => [
-        'name' => env('MODULE_NAME', 'tsu_template'),
+        'full_name' => env('MODULE_FULL_NAME', 'tsu_template'),
+        'name' => env('MODULE_NAME', 'template'),
     ],
 
     // Main Apps
@@ -27,9 +29,11 @@ return [
     'active_guards' => ['web'],
 
     // Allowed Roles
-    'allowed_roles' => env('APP_ALLOWED_ROLES')
-        ? explode(',', env('APP_ALLOWED_ROLES'))
-        : [],
+    'roles' => [
+        'allowed' => env('APP_ALLOWED_ROLES')
+            ? explode(',', env('APP_ALLOWED_ROLES'))
+            : [],
+    ],
 
     // Oauth Authorization Grant
     'oauth' =>[
@@ -38,11 +42,12 @@ return [
         'authorization_redirect' => env('TSU_SSO_REDIRECT_URI')
     ],
 
+    // PIKDI Settings
     'pikdi' => [
         'name' => env('PIKDI_ADMIN_NAME', 'PIKDI TSU'),
         'username' => env('PIKDI_ADMIN_USERNAME', 'pikditsu'),
         'email' => env('PIKDI_ADMIN_EMAIL', 'pikdi@tsu.ac.id'),
-        'password' => env('MODULE_NAME', 'tsu_template'),
+        'password' => env('MODULE_FULL_NAME', 'tsu_template'),
         'key' => [
             'emergency' => env('PIKDI_EMERGENCY_SECRET', 'pikdiemergency@TSU25'),
             'rescue' => env('PIKDI_RESCUE_SECRET')

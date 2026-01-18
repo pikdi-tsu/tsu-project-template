@@ -56,7 +56,7 @@
                     },
                     { data: 'route', name: 'route' },
                     { data: 'permission', name: 'permission_name' }, // Kolom custom di controller
-                    { data: 'status', name: 'is_active' },         // Kolom custom di controller
+                    { data: 'status', name: 'isactive' },         // Kolom custom di controller
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ]
             });

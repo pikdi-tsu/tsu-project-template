@@ -34,8 +34,8 @@ class MenuController extends Controller
             })
             ->addColumn('status', function ($d) {
                 // Adaptasi kolom 'aktif' teman Mas
-                $warna = $d->is_active ? 'success' : 'danger';
-                $text  = $d->is_active ? 'Aktif' : 'Non-Aktif';
+                $warna = $d->isactive ? 'success' : 'danger';
+                $text  = $d->isactive ? 'Aktif' : 'Non-Aktif';
                 return '<span class="badge badge-'.$warna.'">'.$text.'</span>';
             })
             ->addColumn('action', function ($d) {
@@ -74,7 +74,7 @@ class MenuController extends Controller
             'permission_name' => $request->permission_name, // Ini pengganti 'Alias' atau logic GroupUser lama
             'parent_id'       => $request->parent_id,
             'order'           => $request->order,
-            'is_active'       => $request->has('is_active') ? 1 : 0,
+            'isactive'       => $request->has('isactive') ? 1 : 0,
         ]);
 
         return redirect()->route('system.menu.index')->with('success', 'Menu berhasil dibuat!');
@@ -100,7 +100,7 @@ class MenuController extends Controller
             'permission_name' => $request->permission_name,
             'parent_id'       => $request->parent_id,
             'order'           => $request->order,
-            'is_active'       => $request->has('is_active') ? 1 : 0,
+            'isactive'       => $request->has('isactive') ? 1 : 0,
         ]);
 
         return redirect()->route('system.menu.index')->with('success', 'Menu berhasil diupdate!');
