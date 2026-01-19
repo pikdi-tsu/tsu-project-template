@@ -17,7 +17,7 @@ class UserProfileController extends Controller
     {
         $user = auth()->user();
         $title = 'Profil Saya';
-        $hasPhoto = !empty($user->profile_photo_path);
+        $hasPhoto = !empty($user->avatar_url);
         $formattedRoles = $user->getRoleNames()->map(function($role) {
             $badgeClass = match($role) {
                 'super admin' => 'badge-danger',    // Merah
@@ -149,7 +149,7 @@ class UserProfileController extends Controller
                 $homebaseUrl = $response->json()['data']['photo_url'];
 
                 // Hapus accessor foto lama jika ada
-                $oldPhoto = $user->profile_photo_path;
+                $oldPhoto = $user->avatar_url;
 
                 if ($oldPhoto && !str_starts_with($oldPhoto, 'http')) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPhoto);
@@ -158,7 +158,7 @@ class UserProfileController extends Controller
                 // B. JURUS PAMUNGKAS: UPDATE DATABASE PAKSA (Query Builder)
                 // Kita "bypass" Eloquent Model supaya tidak kena blokir $fillable
 //                DB::table(config('auth.providers.users.table'), 'template_users')
-                User::query()->where('id', $user->id)->update(['profile_photo_path' => $homebaseUrl]);
+                User::query()->where('id', $user->id)->update(['avatar_url' => $homebaseUrl]);
 
                 // Update database LOKAL Template (Manual Query)
                 // Asumsi kolom di tabel user template namanya 'profile_photo_path' atau sesuaikan

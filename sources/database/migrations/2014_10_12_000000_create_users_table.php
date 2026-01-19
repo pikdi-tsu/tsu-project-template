@@ -17,26 +17,29 @@ class CreateUsersTable extends Migration
 
         Schema::create($tableName, static function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('tsu_homebase_id')->nullable()->unique()->index()->comment('ID User asli dari TSU Homebase');
-            $table->bigInteger('username')->unique()->nullable()->comment('Username berisi NIM/NIK dari TSU Homebase');
-            $table->bigInteger('nidn')->unique()->nullable();
+            // --- IDENTITAS SSO ---
+            $table->uuid('sso_id')->nullable()->unique()->index()->comment('ID SSO dari TSU Homebase');
+            $table->string('username')->unique()->nullable()->comment('Berisi NIM atau NIK dari Homebase');
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-
-            // Password harus null
             $table->string('password')->nullable();
-            $table->string('profile_photo_path', 2048)->nullable();
-            $table->string('unit')->nullable();
-
-            // Token SSO
+            $table->string('avatar_url', 2048)->nullable();
             $table->text('sso_access_token')->nullable()->comment('Token untuk request API ke Homebase');
             $table->text('sso_refresh_token')->nullable();
-
             $table->tinyInteger('isactive')->default(1)->comment('1=Aktif, 0=Non-Aktif');
-
             $table->rememberToken();
             $table->timestamps();
+        });
+
+        Schema::create('sessions', static function (Blueprint $table) {
+            $table->string('id')->primary();
+//            $table->foreignId('user_id')->nullable()->index();
+            $table->uuid('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
         });
     }
 
@@ -47,7 +50,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        $tableName = config('auth.providers.users.table', 'users');
-        Schema::dropIfExists($tableName);
+        Schema::dropIfExists(config('auth.providers.users.table'));
     }
 }

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\DataDosenTendik;
+use App\Models\DataMahasiswa;
 use App\Models\User;
 use App\Services\UserSyncService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -86,6 +89,27 @@ class SsoController extends Controller
 
                 Auth::login($user);
 
+                // --- TAMBAHAN: SET SESSION PROFIL ---
+                // Cek role user dari Spatie atau UserSync
+                $roles = $user->getRoleNames()->toArray(); // ['dosen', 'admin']
+
+                // Prioritas Dosen
+                if (in_array('dosen', $roles, true) || in_array('tendik', $roles, true)) {
+                    $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
+                    $roleAktif = 'dosen';
+                } else {
+                    $profil = DataMahasiswa::query()->where('user_id', $user->id)->first();
+                    $roleAktif = 'mahasiswa';
+                }
+
+                if ($profil) {
+                    session([
+                        'active_role' => $roleAktif,
+                        'active_profile_id' => $profil->id,
+                        'active_identity' => $profil->nim ?? $profil->nik
+                    ]);
+                }
+
                 return redirect()->route('dashboard')
                     ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
             } catch (\Exception $e) {
@@ -108,7 +132,7 @@ class SsoController extends Controller
 
         } catch (\Exception $e) {
             // KASUS: ERROR LAIN-LAIN (General)
-            \Log::error($e->getMessage());
+            Log::error($e->getMessage());
             return response()->view('system::errors.index', [
                 'title' => 'Terjadi Kesalahan Login',
                 'message' => 'Terjadi kesalahan teknis saat memproses login',

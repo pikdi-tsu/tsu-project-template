@@ -32,18 +32,7 @@ Route::prefix('')->group(function() {
         Route::get('/rescue-login', [EmergencyLoginController::class, 'showRescueForm'])->name('rescue');
         Route::post('/rescue-login', [EmergencyLoginController::class, 'processRescueLogin'])->name('rescue.post');
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-//        Route::get('NewPassword', [LoginController::class, 'newPassword'])->name('NewPassword');
-//        Route::post('NewPasswordAction', [LoginController::class, 'newPasswordAction'])->name('NewPasswordAction');
-//        Route::get('checkbirthday', [LoginController::class, 'checkbirthday']);
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
-
-        //forgot password
-//        Route::get('forgot-password', [LoginController::class, 'forgotPassword'])->name('forgot_password')->middleware('guest');
-//        Route::post('forgot-password', [LoginController::class, 'actionSendLink'])->name('forgot_password.send');
-//        Route::get('reset-password', [LoginController::class, 'showResetForm'])->name('forgot_password.form_reset')->middleware('guest');
-//        Route::post('reset-password', [LoginController::class, 'updatePassword'])->name('forgot_password.action')->middleware('guest');
-//        Route::get('/form_ForgotPassword/{params}', [LoginController::class, 'FormForgotPassword'])->name('ForgotPassword.formreset');
-//        Route::post('/Action_ForgotPassword/{params}', [LoginController::class, 'ForgotPasswordAction'])->name('ForgotPassword.ActionReset');
 
         // Menu
         Route::prefix('system')->middleware(['web', 'auth'])->name('system.')->group(function() {
@@ -60,11 +49,6 @@ Route::prefix('')->group(function() {
 
         //Setting
         Route::prefix('setting')->group(function(){
-            //Change Password
-//            Route::get('/changepassword', [SettingController::class, 'showChangePassword'])->name('show.changepassword');
-//            Route::post('/changepasswordsave', [SettingController::class, 'saveChangePassword'])->name('save.changepassword');
-
-
             //User Management
             Route::get('/usermanagement', [SettingController::class, 'userManagement'])->name('show.userManagement');
             Route::get('/tabelPegawai', [SettingController::class, 'table_pegawai'])->name('show.tabelPegawai');

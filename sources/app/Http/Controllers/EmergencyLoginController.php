@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DataDosenTendik;
+use App\Models\DataMahasiswa;
 use App\Models\User;
 use App\Services\UserSyncService;
 use Illuminate\Http\Request;
@@ -65,6 +67,27 @@ class EmergencyLoginController extends Controller
             $user = $syncer->handle($userData, null);
 
             Auth::login($user);
+
+            // Cari profil berdasarkan role yang dikirim Homebase
+            $targetRole = $userData['role'] ?? null;
+            $profil = null;
+
+            if ($targetRole === 'mahasiswa') {
+                $profil = DataMahasiswa::query()->where('user_id', $user->id)->first();
+            } elseif (in_array($targetRole, ['dosen', 'tendik', 'admin prodi'])) {
+                $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
+            }
+
+            // SIMPAN SESSION
+            if ($profil) {
+                // Tentukan ID unik (NIM atau NIK)
+                $identity = $profil->nim ?? $profil->nik ?? '-';
+                session([
+                    'active_role' => $targetRole,
+                    'active_profile_id' => $profil->id, // UUID Profil
+                    'active_identity' => $identity // display NIM atau NIK
+                ]);
+            }
 
             return redirect()->route('dashboard')
                 ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);

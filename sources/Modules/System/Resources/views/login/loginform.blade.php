@@ -50,7 +50,7 @@
                         {{ csrf_field() }}
 
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Email" name="email" id="email" required>
+                            <input type="text" class="form-control" placeholder="Email atau Username" name="identity" id="identity" required>
                             <div class="input-group-append">
                                 <div class="input-group-text"><span class="fas fa-user"></span></div>
                             </div>

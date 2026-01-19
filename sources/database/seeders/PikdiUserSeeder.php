@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DataDosenTendik;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,17 +20,19 @@ class PikdiUserSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $name = config('app.pikdi.name', 'PIKDI TSU');
+        $username = 'pikdi';
         $email = config('app.pikdi.email', 'pikdi@tsu.ac.id');
         $password = config('app.pikdi.password', 'pikdiTSU@25') . '@TSU25';
 
         $pikdiUser = User::query()->firstOrCreate(
             ['email' => $email],
             [
-                'name' => $name,
-                'password' => Hash::make($password),
-                'unit' => 'Pusat Informasi, Komunikasi dan Digital',
-                'tsu_homebase_id' => null, // Penanda akun lokal
+                'name'              => $name,
+                'username'          => $username,
+                'password'          => Hash::make($password),
                 'email_verified_at' => now(),
+                'isactive'          => 1,
+                'sso_id'   => null, // Null karena akun lokal
             ]
         );
 
@@ -41,7 +44,21 @@ class PikdiUserSeeder extends Seeder
 
         $pikdiUser->assignRole($roleSuperAdmin);
 
-        $this->command->info('✅ Akun Backdoor PIKDI berhasil ditanam!');
-        $this->command->info("📧 Email: $email");
+        DataDosenTendik::query()->firstOrCreate(
+            ['user_id' => $pikdiUser->id],
+            [
+                'nik'                => '999999', // Dummy NIK
+                'status_pegawai'     => 'TETAP',
+                'gelar_depan'        => '',
+                'gelar_belakang'     => '',
+                'jabatan_fungsional' => 'Super Admin IT',
+                // Field lain biarkan null/default sesuai migrasi
+            ]
+        );
+
+        $this->command->info('Akun Backdoor PIKDI berhasil ditanam & Profil dibuat!');
+        $this->command->info("Email: $email");
+        $this->command->info("Username: $username");
+        $this->command->info("Password: (Sesuai Config)");
     }
 }
