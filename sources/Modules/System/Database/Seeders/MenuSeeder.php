@@ -34,7 +34,7 @@ class MenuSeeder extends Seeder
             'name' => 'Users',
             'route' => 'users.index',
             'parent_id' => $system->id, // Anaknya System Management
-            'permission_name' => 'system:user:view',
+            'permission_name' => 'system:user:manage',
             'icon' => 'fas fa-users',
         ]);
 

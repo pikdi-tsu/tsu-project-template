@@ -4,62 +4,278 @@
 @endsection
 
 @section('content')
-    <div class="box box-primary">
-        <div class="box-header with-border">
-            <h3 class="box-title">Manajemen Menu</h3>
-            <div class="box-tools pull-right">
-                <a href="{{ route('system.menu.create') }}" class="btn btn-primary btn-sm">
+    {{-- SECTION UTAMA: Pake class 'card' (AdminLTE 3) biar ada jarak padding --}}
+    <div class="card card-primary card-outline">
+
+        {{-- HEADER --}}
+        <div class="card-header">
+            <h3 class="card-title">Manajemen Menu</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-create">
                     <i class="fa fa-plus"></i> Tambah Menu
-                </a>
+                </button>
             </div>
         </div>
 
-        <div class="box-body">
-            <table class="table table-bordered table-striped" id="table-menu">
-                <thead>
-                <tr>
-                    <th width="5%">No</th>
-                    <th>Nama Menu</th>
-                    <th>Icon</th>
-                    <th>Route</th>
-                    <th>Permission (Gembok)</th>
-                    <th>Status</th>
-                    <th width="15%">Aksi</th>
-                </tr>
-                </thead>
-                <tbody>
-                {{-- KOSONGKAN BODY INI --}}
-                {{-- DataTables AJAX akan mengisinya otomatis --}}
-                </tbody>
-            </table>
+        {{-- BODY (Tabel ada disini) --}}
+        <div class="card-body">
+            <div class="table-responsive"> {{-- Biar tabel bisa discroll kalo layar kecil --}}
+                <table class="table table-bordered table-striped table-hover" id="table-menu" style="width: 100%;">
+                    <thead class="bg-light">
+                    <tr>
+                        <th width="5%">No</th>
+                        <th>Nama Menu</th>
+                        <th>Icon</th>
+                        <th>Route</th>
+                        <th>Permission</th>
+                        <th>Status</th>
+                        <th width="15%">Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{-- KOSONGKAN INI: Biarkan DataTables yang isi lewat AJAX --}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= MODAL CREATE ================= --}}
+    <div class="modal fade" id="modal-create">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Tambah Menu Baru</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{ route('system.menu.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nama Menu <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required placeholder="Contoh: Data Mahasiswa">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Icon (FontAwesome)</label>
+                                    <div class="input-group">
+                                        <input type="text" name="icon" class="form-control" placeholder="fas fa-circle">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text"><i class="fas fa-info"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Route Laravel</label>
+                                    <input type="text" name="route" class="form-control" placeholder="system.users.index">
+                                    <small class="text-muted">Kosongkan jika ini menu Parent (Dropdown).</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Permission</label>
+                                    <select name="permission_name" class="form-control select2" style="width: 100%;">
+                                        <option value="">-- Public --</option>
+                                        {{-- Pastikan variabel $permissions dikirim dari controller --}}
+                                        @if(isset($permissions))
+                                            @foreach($permissions as $perm)
+                                                <option value="{{ $perm }}">{{ $perm }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Parent Menu</label>
+                                    <select name="parent_id" class="form-control select2" style="width: 100%;">
+                                        <option value="">-- Jadikan Utama --</option>
+                                        {{-- Pastikan variabel $parents dikirim dari controller --}}
+                                        @if(isset($parents))
+                                            @foreach($parents as $id => $name)
+                                                <option value="{{ $id }}">{{ $name }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Urutan</label>
+                                    <input type="number" name="order" class="form-control" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Status</label> <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="create_isactive" name="isactive" value="1" checked>
+                                        <label class="custom-control-label" for="create_isactive">Aktif</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= MODAL EDIT (AJAX CONTAINER) ================= --}}
+    <div class="modal fade" id="modal-edit">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-edit-content">
+                {{-- Loading State --}}
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Sedang mengambil data...</p>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
 
-@push('scripts')
+@section('script')
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTables
-            $('#table-menu').DataTable({
+            // Hapus instance lama
+            if ($.fn.DataTable.isDataTable('#table-menu')) {
+                $('#table-menu').DataTable().destroy();
+            }
+
+            // Init DataTables Baru
+            var table = $('#table-menu').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('system.menu.json') }}", // 👈 Ini dia yang manggil data!
+                responsive: true,
+                autoWidth: false,
+                ajax: "{{ route('system.menu.json') }}",
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'text', name: 'text' },
+                    { data: 'name', name: 'name' },
                     {
                         data: 'icon',
                         name: 'icon',
                         render: function(data) {
-                            return '<i class="'+data+'"></i> ('+data+')';
+                            return data ? '<i class="'+data+'"></i>' : '-';
                         }
                     },
                     { data: 'route', name: 'route' },
-                    { data: 'permission', name: 'permission_name' }, // Kolom custom di controller
-                    { data: 'status', name: 'isactive' },         // Kolom custom di controller
+                    { data: 'permission', name: 'permission_name' },
+                    { data: 'status', name: 'isactive' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ]
             });
+
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                iconColor: 'white',
+                customClass: {
+                    popup: 'colored-toast'
+                },
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            // Cek Session: SUKSES
+            @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: "{{ session('success') }}",
+                background: '#28a745',
+                color: '#fff'
+            });
+            @endif
+
+            // Cek Session: ERROR
+            @if(session('error'))
+            Toast.fire({
+                icon: 'error',
+                title: "{{ session('error') }}",
+                background: '#dc3545',
+                color: '#fff'
+            });
+            @endif
+
+            // Event Listener Tombol Edit
+            $('body').on('click', '.btn-edit', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+
+                $('#modal-edit').modal('show')
+                // Reset konten modal ke loading state setiap kali dibuka
+                $('#modal-edit-content').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p>Loading...</p></div>');
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#modal-edit-content').html(response);
+                    },
+                    error: function() {
+                        $('#modal-edit-content').html('<div class="alert alert-danger m-3">Gagal mengambil data menu.</div>');
+                    }
+                });
+            });
+
+            // Event Listener Tombol Delete
+            $('body').on('click', '.btn-delete', function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+
+                Swal.fire({
+                    title: 'Hapus Menu Ini?',
+                    text: "Data yang dihapus tidak bisa kembali lagi!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus!',
+                    cancelButtonText: '<i class="fas fa-times"></i> Batal',
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'btn btn-danger btn-lg mr-2',
+                        cancelButton: 'btn btn-secondary btn-lg',
+                        popup: 'animated rubberBand'
+                    },
+                    backdrop: `rgba(0,0,0,0.4) left top no-repeat`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Efek Loading saat menghapus
+                        Swal.fire({
+                            title: 'Sedang Menghapus...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading()
+                            }
+                        });
+
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
-@endpush
+@endsection

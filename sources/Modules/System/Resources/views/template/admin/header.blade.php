@@ -39,18 +39,19 @@
     <link rel="stylesheet" href="{{ asset('public/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css')}}">
     <link rel="stylesheet" href="{{ asset('public/assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css')}}">
     <link rel="stylesheet" href="{{ asset('public/assets/plugins/datatables-buttons/css/buttons.bootstrap4.min.css')}}">
+    <!-- SweetAlert 2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('link_href')
 </head>
 <body class="hold-transition sidebar-mini layout-navbar-fixed">
     <div class="wrapper">
-        <!-- Preloader -->
-
         @include('system::template/admin/sidebar')
         @include('system::template/admin/navbar')
-        <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
             @yield('content')
         </div>
-        <!-- /.content-wrapper -->
         @include('system::template/admin/loading')
         @include('system::template/admin/footer')
+</body>
+</html>
