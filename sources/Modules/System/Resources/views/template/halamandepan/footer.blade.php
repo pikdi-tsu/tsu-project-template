@@ -24,11 +24,12 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjCGmQ0Uq4exrzdcL6rvxywDDOvfAu6eE"></script>
     <script src="{{asset('public/assetsku/js/gmaps.min.js')}}"></script>
     <script src="{{asset('public/assetsku/js/theme.js')}}"></script>
-    <script src="{{ asset('public/assets/dist/js/sweetalert.js') }}"></script>
-
-
+{{--    <script src="{{ asset('public/assets/dist/js/sweetalert.js') }}"></script>--}}
 
     <script>
-
+        @if (Session::has('alert'))
+            Swal.fire('{{session('alert')['title']}}', '{{session('alert')['message']}}', '{{session('alert')['status']}}')
+        @endif
     </script>
+    @include('system::components.alert')
     @yield('script')

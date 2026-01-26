@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         $tableUsers = config('auth.providers.users.table', 'users');
-        $tableName = config('app.module.name', 'siakad');
+        $tableName = config('app.module.name', 'template');
 
         Schema::create($tableName . '_data_mahasiswas', static function (Blueprint $table) use ($tableUsers) {
             $table->uuid('id')->primary();

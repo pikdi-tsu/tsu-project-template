@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class MenuSidebar extends Model
 {
-    protected $table = 'system_menu_sidebars';
-
     protected $guarded = ['id'];
 
     protected $fillable = [
@@ -20,6 +18,11 @@ class MenuSidebar extends Model
         'order',
         'isactive'
     ];
+
+    public function getTable()
+    {
+        return config('app.module.name') . '_menu_sidebars';
+    }
 
     // Relasi ke Submenu
     public function children()

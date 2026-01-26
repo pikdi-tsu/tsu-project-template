@@ -5,9 +5,12 @@ use Illuminate\Support\Facades\Route;
 use Modules\System\Http\Controllers\DashboardController;
 use Modules\System\Http\Controllers\HomeController;
 use Modules\System\Http\Controllers\LoginController;
+use Modules\System\Http\Controllers\PermissionController;
+use Modules\System\Http\Controllers\RoleController;
 use Modules\System\Http\Controllers\SettingController;
 use App\Http\Controllers\SsoController;
 use Modules\System\Http\Controllers\MenuController;
+use Modules\System\Http\Controllers\UserController;
 use Modules\System\Http\Controllers\UserProfileController;
 
 /*
@@ -22,33 +25,58 @@ use Modules\System\Http\Controllers\UserProfileController;
 */
 
 Route::prefix('')->group(function() {
+
     Route::get('/', [HomeController::class, 'index'])->name('indexing')->middleware('web', 'guest');
+
     Route::middleware(['web'])->group(function () {
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('login', [LoginController::class, 'index'])->name('login')->middleware('guest');
         Route::post('login', [LoginController::class, 'login'])->name('login.action');
         Route::get('login/sso', [SsoController::class, 'redirect'])->name('sso.login');
         Route::get('login/sso/callback', [SsoController::class, 'callback'])->name('sso.callback');
-        Route::get('/emergency-login', [EmergencyLoginController::class, 'login'])->name('emergency-login');
-        Route::get('/rescue-login', [EmergencyLoginController::class, 'showRescueForm'])->name('rescue');
-        Route::post('/rescue-login', [EmergencyLoginController::class, 'processRescueLogin'])->name('rescue.post');
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('emergency-login', [EmergencyLoginController::class, 'login'])->name('emergency-login');
+        Route::get('rescue-login', [EmergencyLoginController::class, 'showRescueForm'])->name('rescue');
+        Route::post('rescue-login', [EmergencyLoginController::class, 'processRescueLogin'])->name('rescue.post');
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-        // Menu
-        Route::prefix('system')->middleware(['web', 'auth'])->name('system.')->group(function() {
-            Route::get('menu/json', [MenuController::class, 'datatable'])->name('menu.json');
-            Route::resource('menu', MenuController::class);
+        // System Navigation
+        Route::prefix('system')->middleware(['auth'])->name('system.')->group(function() {
+            // User
+            Route::middleware(['permission:system:user:view'])->group(function() {
+                Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
+                Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
+                Route::resource('user', UserController::class);
+            });
+
+            // Role
+            Route::middleware(['permission:system:role:view'])->group(function() {
+                Route::get('role/json', [RoleController::class, 'datatable'])->name('role.json');
+                Route::post('role/sync', [RoleController::class, 'sync'])->name('role.sync'); // Route Sync
+                Route::resource('role', RoleController::class)->only(['index', 'edit', 'update']);
+            });
+
+            // Permissions
+            Route::middleware(['permission:system:permission:view'])->group(function() {
+                Route::get('permission/json', [PermissionController::class, 'datatable'])->name('permission.json');
+                Route::resource('permission', PermissionController::class)->except(['create', 'edit', 'show']);
+            });
+
+            // Menu
+            Route::middleware(['permission:system:menu:view'])->group(function() {
+                Route::get('menu/json', [MenuController::class, 'datatable'])->name('menu.json');
+                Route::resource('menu', MenuController::class);
+            });
         });
 
         // Profile & Password
-        Route::prefix('profile')->middleware(['web', 'auth'])->group(function() {
-            Route::get('/', [UserProfileController::class, 'index'])->name('profile');
+        Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
+            Route::get('/', [UserProfileController::class, 'index'])->name('index');
             Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
-            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('profile.update-password');
+            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
         });
 
         //Setting
-        Route::prefix('setting')->group(function(){
+        Route::prefix('setting')->middleware(['auth'])->name('setting.')->group(function(){
             //User Management
             Route::get('/usermanagement', [SettingController::class, 'userManagement'])->name('show.userManagement');
             Route::get('/tabelPegawai', [SettingController::class, 'table_pegawai'])->name('show.tabelPegawai');

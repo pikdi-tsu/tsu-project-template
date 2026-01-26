@@ -32,15 +32,12 @@ class PikdiUserSeeder extends Seeder
                 'password'          => Hash::make($password),
                 'email_verified_at' => now(),
                 'isactive'          => 1,
-                'sso_id'   => null, // Null karena akun lokal
+                'last_login_at'     => now(),
+                'sso_id'            => null, // Null karena akun lokal
             ]
         );
 
-        $roleSuperAdmin = Role::query()->firstOrCreate(['name' => 'Super Admin']); // Buat Dev/PIKDI
-        $roleAdmin      = Role::query()->firstOrCreate(['name' => 'admin']);       // Buat Admin Unit/Fakultas
-        $roleUser       = Role::query()->firstOrCreate(['name' => 'user']);
-
-        $roleSuperAdmin->syncPermissions(Permission::all());
+        $roleSuperAdmin = Role::query()->firstOrCreate(['name' => 'super admin template']);
 
         $pikdiUser->assignRole($roleSuperAdmin);
 

@@ -11,9 +11,15 @@
         <div class="card-header">
             <h3 class="card-title">Manajemen Menu</h3>
             <div class="card-tools">
-                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-create">
-                    <i class="fa fa-plus"></i> Tambah Menu
-                </button>
+                @can('system:menu:create')
+                    <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-create">
+                        <i class="fa fa-plus"></i> Tambah Menu
+                    </button>
+                @else
+                    <span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.7;" title="Anda tidak memiliki akses ke action ini">
+                        <i class="fas fa-lock mr-1"></i> Tambah Menu (No Access)
+                    </span>
+                @endcan
             </div>
         </div>
 
@@ -73,8 +79,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Route Laravel</label>
-                                    <input type="text" name="route" class="form-control" placeholder="system.users.index">
-                                    <small class="text-muted">Kosongkan jika ini menu Parent (Dropdown).</small>
+                                    <input type="text" name="route" id="input_route" class="form-control" placeholder="system.users.index">
+                                    <small class="text-muted">Isi <code>#</code> atau kosongkan jika ini menu Parent (Dropdown).</small>
                                 </div>
                             </div>
                         </div>
@@ -83,21 +89,23 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Permission</label>
-                                    <select name="permission_name" class="form-control select2" style="width: 100%;">
+                                    <select name="permission_name" id="input_permission" class="form-control select2" style="width: 100%;">
                                         <option value="">-- Public --</option>
-                                        {{-- Pastikan variabel $permissions dikirim dari controller --}}
                                         @if(isset($permissions))
                                             @foreach($permissions as $perm)
                                                 <option value="{{ $perm }}">{{ $perm }}</option>
                                             @endforeach
                                         @endif
                                     </select>
+                                    <small id="help_permission" class="text-danger" style="display: none;">
+                                        <i class="fas fa-ban"></i> Permission dimatikan untuk Menu Induk (Folder).
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Parent Menu</label>
-                                    <select name="parent_id" class="form-control select2" style="width: 100%;">
+                                    <select name="parent_id" id="input_parent" class="form-control select2" style="width: 100%;">
                                         <option value="">-- Jadikan Utama --</option>
                                         {{-- Pastikan variabel $parents dikirim dari controller --}}
                                         @if(isset($parents))
@@ -185,41 +193,37 @@
                 ]
             });
 
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                iconColor: 'white',
-                customClass: {
-                    popup: 'colored-toast'
-                },
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+            // AUTO DISABLE PERMISSION
+            function adjustCreatePermission() {
+                var routeVal  = $('#input_route').val();
+                var parentVal = $('#input_parent').val();
+                var permInput = $('#input_permission');
+                var helpText  = $('#help_permission');
+
+                // Logic parent menu
+                if ( (parentVal === '' || parentVal == null) && (routeVal === '' || routeVal === '#') ) {
+                    permInput.val('').trigger('change');
+                    permInput.prop('disabled', true);
+                    helpText.show();
+                } else {
+                    permInput.prop('disabled', false);
+                    helpText.hide();
                 }
+            }
+
+            $('#input_route').on('keyup change', function() {
+                adjustCreatePermission();
             });
 
-            // Cek Session: SUKSES
-            @if(session('success'))
-            Toast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}",
-                background: '#28a745',
-                color: '#fff'
+            $('#input_parent').on('change', function() {
+                adjustCreatePermission();
             });
-            @endif
 
-            // Cek Session: ERROR
-            @if(session('error'))
-            Toast.fire({
-                icon: 'error',
-                title: "{{ session('error') }}",
-                background: '#dc3545',
-                color: '#fff'
+            adjustCreatePermission();
+
+            $('form').on('submit', function() {
+                $('#input_permission').prop('disabled', false);
             });
-            @endif
 
             // Event Listener Tombol Edit
             $('body').on('click', '.btn-edit', function(e) {

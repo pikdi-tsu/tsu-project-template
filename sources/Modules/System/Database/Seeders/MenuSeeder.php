@@ -24,35 +24,45 @@ class MenuSeeder extends Seeder
         // System Management (Parent Menu)
         $system = MenuSidebar::query()->create([
             'name' => 'System Management',
+            'route' => '#',
             'icon' => 'fas fa-cogs',
             'order' => 99,
-            'permission_name' => 'system:settings:view',
+            'permission_name' => '',
         ]);
 
         // Submenu: Users
         MenuSidebar::query()->create([
             'name' => 'Users',
-            'route' => 'users.index',
-            'parent_id' => $system->id, // Anaknya System Management
-            'permission_name' => 'system:user:manage',
+            'route' => 'system.user.index',
+            'parent_id' => $system->id,
+            'permission_name' => 'system:user:view',
             'icon' => 'fas fa-users',
         ]);
 
-        // Submenu: Roles & Permissions
+        // Submenu: Roles
         MenuSidebar::query()->create([
-            'name' => 'Roles & Permissions',
-            'route' => 'roles.index',
+            'name' => 'Roles',
+            'route' => 'system.role.index',
             'parent_id' => $system->id,
             'icon' => 'fas fa-user-shield',
-            'permission_name' => 'system:role:manage', // <--- PAKE YANG INI
+            'permission_name' => 'system:role:view',
+        ]);
+
+        // Submenu: Role Permissions
+        MenuSidebar::query()->create([
+            'name' => 'Role Permissions',
+            'route' => 'system.permission.index',
+            'parent_id' => $system->id,
+            'icon' => 'fas fa-file-shield',
+            'permission_name' => 'system:permission:view',
         ]);
 
         // Submenu: Menus
         MenuSidebar::query()->create([
-            'name' => 'Menu Management',
-            'route' => 'menus.index',
+            'name' => 'Menus Management',
+            'route' => 'system.menu.index',
             'parent_id' => $system->id,
-            'permission_name' => 'system:menu:manage',
+            'permission_name' => 'system:menu:view',
             'icon' => 'fas fa-list',
         ]);
     }

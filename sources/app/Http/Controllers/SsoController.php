@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -20,9 +21,21 @@ class SsoController extends Controller
     // Fungsi Melempar User ke TSU Homebase
     public function redirect()
     {
+        $throttleKey = 'sso-attempt:' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return redirect()->route('login')
+                ->with('error', "Terlalu banyak klik SSO. Tunggu <b id='sso-alert-timer'>$seconds</b> detik.")
+                ->with('retry_seconds_sso', $seconds);
+        }
+
+        RateLimiter::hit($throttleKey, 60);
+
         $query = http_build_query([
-            'client_id' => config('app.oauth.authorization_id'),
-            'redirect_uri' => config('app.oauth.authorization_redirect'),
+            'client_id' => config('app.oauth.authorization.id'),
+            'redirect_uri' => config('app.oauth.authorization.redirect'),
             'response_type' => 'code',
             'scope' => '',
         ]);
@@ -40,7 +53,7 @@ class SsoController extends Controller
                     ->with('error', 'Login dibatalkan. Anda menolak memberikan akses.');
             }
 
-            // Error lain dari Homebase (misal invalid scope)
+            // Error lain dari Homebase
             abort(403, 'SSO Error: ' . $request->error_description);
         }
 
@@ -54,14 +67,13 @@ class SsoController extends Controller
             // Note: hapus withoutVerifying() saat production (https)
             $response = Http::withoutVerifying()->asForm()->post(config('app.tsu_homebase.url') . '/oauth/token', [
                 'grant_type' => 'authorization_code',
-                'client_id' => config('app.oauth.authorization_id'),
-                'client_secret' => config('app.oauth.authorization_secret'),
-                'redirect_uri' => config('app.oauth.authorization_redirect'),
+                'client_id' => config('app.oauth.authorization.id'),
+                'client_secret' => config('app.oauth.authorization.secret'),
+                'redirect_uri' => config('app.oauth.authorization.redirect'),
                 'code' => $request->code,
             ]);
 
             if ($response->failed()) {
-                // dd($response->json());
                 return redirect()->route('login')->with('error', 'Gagal menukar token dengan server SSO.');
             }
 
@@ -81,17 +93,15 @@ class SsoController extends Controller
             $userData = $userResponse->json();
 
             try {
-                // Panggil Service yang SAMA persis
                 $user = $syncer->handle($userData, $accessToken);
 
-                // Simpan token di session (khas SSO)
+                // Simpan token di session
                 session(['homebase_access_token' => $accessToken]);
 
                 Auth::login($user);
 
-                // --- TAMBAHAN: SET SESSION PROFIL ---
                 // Cek role user dari Spatie atau UserSync
-                $roles = $user->getRoleNames()->toArray(); // ['dosen', 'admin']
+                $roles = $user->getRoleNames()->toArray();
 
                 // Prioritas Dosen
                 if (in_array('dosen', $roles, true) || in_array('tendik', $roles, true)) {
@@ -113,7 +123,6 @@ class SsoController extends Controller
                 return redirect()->route('dashboard')
                     ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
             } catch (\Exception $e) {
-                // Handle jika role ditolak
                 return redirect()->route('login')
                     ->with('alert', ['title' => 'AKSES DITOLAK', 'message' => $e->getMessage(), 'status' => 'danger']);
             }
