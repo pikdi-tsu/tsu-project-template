@@ -60,6 +60,13 @@ return [
         ],
     ],
 
+    // GMAPS Settings
+    'gmaps' => [
+        'api' => [
+            'key' => env('GMAPS_KEY'),
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

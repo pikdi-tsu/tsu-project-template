@@ -21,7 +21,7 @@
     <script src="{{asset('public/assetsku/js/jquery.ajaxchimp.min.js')}}"></script>
     <script src="{{asset('public/assetsku/js/mail-script.js')}}"></script>
     <!--gmaps Js-->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjCGmQ0Uq4exrzdcL6rvxywDDOvfAu6eE"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('app.gmaps.api.key') }}"></script>
     <script src="{{asset('public/assetsku/js/gmaps.min.js')}}"></script>
     <script src="{{asset('public/assetsku/js/theme.js')}}"></script>
 {{--    <script src="{{ asset('public/assets/dist/js/sweetalert.js') }}"></script>--}}
