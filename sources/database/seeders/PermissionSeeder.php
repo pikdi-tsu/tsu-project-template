@@ -18,32 +18,55 @@ class PermissionSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $systemPermissions = [
-            'system:dashboard:view', // View dashboard
-            'system:user:view',      // View list user
-            'system:user:create',    // Create user
-            'system:user:edit',      // Edit user
-            'system:user:delete',    // Delete user
-            'system:role:manage',    // Manage role
-            'system:settings:view',  // View setting
-            'system:menu:manage',  // View setting
+            'system:user:view',         // View user
+            'system:user:create',       // Create user
+            'system:user:edit',         // Edit user
+            'system:user:delete',       // Delete user
+
+            'system:role:view',         // View role
+            'system:role:create',       // Create role
+            'system:role:edit',         // Edit role
+            'system:role:delete',       // Delete role
+
+            'system:permission:view',   // View permission
+            'system:permission:create', // Create permission
+            'system:permission:edit',   // Edit permission
+            'system:permission:delete', // Delete permission
+
+            'system:menu:view',         // View menu
+            'system:menu:create',       // Create menu
+            'system:menu:edit',         // Edit menu
+            'system:menu:delete',       // Delete menu
         ];
 
-        $projectPermissions = [
-            'template:data:view',
-            'template:data:create',
+        $adminPermissions = [
+            'system:user:view',         // View user
+            'system:user:edit',         // Edit user
+            'system:user:delete',       // Delete user
+            'system:role:view',         // View role
+            'system:role:edit',         // Edit role
+            'system:permission:view',   // View permission
+            'system:permission:create', // Create permission
+            'system:permission:edit',   // Edit permission
+            'system:permission:delete', // Delete permission
+            'system:menu:view',         // View menu
+            'system:menu:edit',         // Edit menu
         ];
 
-        $allPermissions = array_merge($systemPermissions, $projectPermissions);
-
-        foreach ($allPermissions as $p) {
+        foreach ($systemPermissions as $p) {
             Permission::query()->firstOrCreate(['name' => $p]);
         }
 
-        $superAdminRole = Role::query()->firstOrCreate([
-            'name' => 'super admin',
+        Role::query()->firstOrCreate([
+            'name' => 'super admin ' . config('app.module.name'),
             'guard_name' => 'web'
         ]);
 
-        $superAdminRole->syncPermissions(Permission::all());
+        $adminRole = Role::query()->firstOrCreate([
+            'name' => 'admin ' . config('app.module.name'),
+            'guard_name' => 'web'
+        ]);
+
+        $adminRole->syncPermissions($adminPermissions);
     }
 }

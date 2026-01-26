@@ -26,7 +26,8 @@ class User extends Authenticatable
         'avatar_url',
         'isactive',
         'sso_access_token',
-        'sso_refresh_token'
+        'sso_refresh_token',
+        'password'
     ];
 
     /**
@@ -100,16 +101,30 @@ class User extends Authenticatable
 
     public function getProfilePhotoUrlAttribute()
     {
-        $path = $this->profile_photo_path;
+        $path = $this->avatar_url;
 
         if (empty($path)) {
-            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=2d394a';
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=FFFFFF&background=2d394a';
         }
 
-        if (str_starts_with($path, 'http')) {
+        if (str_starts_with($path, 'https')) {
             return $path;
         }
 
         return asset('storage/' . $path);
+    }
+
+    // Sync Delete
+    protected static function booted()
+    {
+        static::deleting(static function ($user) {
+            if ($user->mahasiswa) {
+                $user->mahasiswa->delete();
+            }
+
+            if ($user->dosen) {
+                $user->dosen->delete();
+            }
+        });
     }
 }

@@ -129,14 +129,14 @@ class UserProfileController extends Controller
         try {
             $user  = auth()->user();
             $file  = $request->file('photoprofile');
-            $token = session('homebase_access_token'); // Pastikan nama session token benar
+            $token = session('homebase_access_token');
 
             // KIRIM KE HOMEBASE (API)
             $response = Http::withToken($token)
                 ->acceptJson()
                 ->withoutVerifying()
                 ->attach(
-                    'photoprofile', // Nama field yang diminta Homebase
+                    'photoprofile',
                     file_get_contents($file->getRealPath()),
                     $file->getClientOriginalName()
                 )
@@ -151,18 +151,16 @@ class UserProfileController extends Controller
                 // Hapus accessor foto lama jika ada
                 $oldPhoto = $user->avatar_url;
 
-                if ($oldPhoto && !str_starts_with($oldPhoto, 'http')) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPhoto);
+                if ($oldPhoto && !str_starts_with($oldPhoto, 'http') && \Storage::disk('public')->exists($oldPhoto)) {
+                    \Storage::disk('public')->delete($oldPhoto);
                 }
 
-                // B. JURUS PAMUNGKAS: UPDATE DATABASE PAKSA (Query Builder)
-                // Kita "bypass" Eloquent Model supaya tidak kena blokir $fillable
-//                DB::table(config('auth.providers.users.table'), 'template_users')
+                // Update database (Query Builder)
                 User::query()->where('id', $user->id)->update(['avatar_url' => $homebaseUrl]);
 
                 // Update database LOKAL Template (Manual Query)
-                // Asumsi kolom di tabel user template namanya 'profile_photo_path' atau sesuaikan
-                $user->profile_photo_path = $homebaseUrl;
+                $user->avatar_url = $homebaseUrl;
+                $user->save();
 
                 return back()->with('success', 'Foto profil berhasil disinkronkan ke Pusat & Lokal!');
             }

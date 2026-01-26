@@ -14,6 +14,11 @@
         <link rel="stylesheet" href="{{asset('public/assetsku/vendors/nice-select/css/nice-select.css')}}" />
         <!-- main css -->
         <link rel="stylesheet" href="{{asset('public/assetsku/css/style.css')}}" />
+        <!-- Font Awesome Icons -->
+        <link rel="stylesheet" href="{{asset('public/assets/plugins/fontawesome-free-7.1.0-web/css/all.min.css')}}">
+        <!-- SweetAlert 2 -->
+        <link rel="stylesheet" href="{{ asset('public/assets/plugins/sweetalert2/sweetalert2.min.css') }}">
+        <script src="{{ asset('public/assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
         @yield('link_href')
     </head>
 
@@ -23,25 +28,5 @@
         @yield('content')
 
         @include('system::template/halamandepan/footer')
-
-        <script>
-            @if (Session::has('alert'))
-                Swal.fire('{{session('alert')['title']}}', '{{session('alert')['message']}}', '{{session('alert')['status']}}')
-            @endif
-
-            function sweetAlert(alert, desc, text) {
-                const Alert = Swal.mixin({
-                    showConfirmButton: true,
-                    timer: 3000
-                });
-
-                Alert.fire({
-                    type: alert,
-                    title: desc,
-                    text: text,
-                });
-            }
-        </script>
-        @yield('script')
     </body>
 </html>

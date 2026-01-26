@@ -6,7 +6,6 @@
     </div>
 </footer>
 
-</div>
 <!-- ./wrapper -->
 
 <!-- jQuery -->
@@ -34,8 +33,7 @@
 <script src="{{ asset('public/assets/plugins/moment/moment.min.js') }}"></script>
 <script src="{{ asset('public/assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
 <!-- Tempusdominus Bootstrap 4 -->
-<script src="{{ asset('public/assets/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}">
-</script>
+<script src="{{ asset('public/assets/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
 <!-- Summernote -->
 <script src="{{ asset('public/assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
 <!-- overlayScrollbars -->
@@ -47,7 +45,7 @@
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
 {{-- <script src="{{ asset('public/assets/dist/js/pages/dashboard.js') }}"></script> --}}
 {{-- alert --}}
-<script src="{{ asset('public/assets/dist/js/sweetalert.js') }}"></script>
+{{--<script src="{{ asset('public/assets/dist/js/sweetalert.js') }}"></script>--}}
 <!-- DataTables  & Plugins -->
 <script src="{{ asset('public/assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('public/assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
@@ -68,15 +66,6 @@
     @endif
 
     bsCustomFileInput.init();
-
-    function notifalert(title,text,type) {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: type,
-            timer: 1500,
-            showConfirmButton: false
-        });
-    }
 </script>
+@include('system::components.alert')
 @yield('script')

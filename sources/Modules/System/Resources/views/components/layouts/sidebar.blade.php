@@ -1,5 +1,5 @@
 @foreach ($menus as $menu)
-    {{-- Cek Permission (Kalau gak punya akses, skip) --}}
+    {{-- Cek Permission --}}
     @if($menu->permission_name && !Auth::user()->can($menu->permission_name))
         @continue
     @endif
@@ -17,9 +17,18 @@
     @else
         {{-- === MENU PARENT (Dropdown) === --}}
         @php
+            // Filter allowed menu
+            $visibleChildren = $menu->children->filter(function ($child) {
+                return empty($child->permission_name) || Auth::user()->can($child->permission_name);
+            });
+        @endphp
+        @if($visibleChildren->isEmpty())
+            @continue
+        @endif
+        @php
             $isActive = false;
-            foreach($menu->children as $child) {
-                if (request()->routeIs($child->route.'*')) {
+            foreach($visibleChildren as $child) {
+                if (Route::has($child->route) && request()->routeIs($child->route.'*')) {
                     $isActive = true;
                     break;
                 }

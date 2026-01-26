@@ -170,7 +170,7 @@
 
                                 {{-- TAB 1: UPDATE FOTO --}}
                                 <div class="active tab-pane" id="foto_profil">
-                                    <form action="{{route('save.change-profile')}}" class="form-horizontal" method="POST" id="form-profile" enctype="multipart/form-data">
+                                    <form action="{{route('profile.save.change-profile')}}" class="form-horizontal" method="POST" id="form-profile" enctype="multipart/form-data">
                                         @csrf
 
                                         <div class="callout callout-info">
@@ -396,7 +396,7 @@
             // Cek apakah awalnya user punya foto? (Kalau src bukan ui-avatars/default, anggap punya)
             var hasInitialPhoto = !originalPhotoUrl.includes('ui-avatars.com') && originalPhotoUrl !== '';
 
-            // === 1. SAAT FILE DIPILIH ===
+            // === SAAT FILE DIPILIH ===
             $inputImage.change(function (event) {
                 var files = event.target.files;
                 if (files && files.length > 0) {
@@ -414,7 +414,7 @@
                 }
             });
 
-            // === 2. INIT CROPPER ===
+            // === INIT CROPPER ===
             $modal.on('shown.bs.modal', function () {
                 cropper = new Cropper(image, {
                     aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, guides: true, center: true, cropBoxMovable: false, cropBoxResizable: true, toggleDragModeOnDblclick: false,
@@ -427,7 +427,7 @@
                 }
             });
 
-            // === 3. EKSEKUSI CROP ===
+            // === EKSEKUSI CROP ===
             $('#btn-crop').click(function () {
                 var canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
                 canvas.toBlob(function (blob) {
@@ -438,21 +438,21 @@
                     $inputImage[0].files = dataTransfer.files;
 
                     // === UPDATE UI SETELAH CROP ===
-                    // 1. Tampilkan Preview Baru
+                    // Tampilkan Preview Baru
                     $('#result-preview-img').attr('src', canvas.toDataURL());
 
-                    // 2. Tampilkan Area Preview (Kalau tadinya hidden)
+                    // Tampilkan Area Preview
                     $('#upload-area').hide();
                     $('#preview-area').fadeIn();
 
-                    // 3. Munculkan Tombol BATAL & Ubah Status
-                    $('#btn-cancel-crop').show(); // Munculin tombol batal
+                    // Munculkan Tombol BATAL & Ubah Status
+                    $('#btn-cancel-crop').show();
                     $('#status-text').text('Foto baru siap disimpan.').removeClass('text-muted').addClass('text-success');
 
-                    // 4. Update Sidebar Kiri (Preview Live)
+                    // Update Sidebar Kiri (Preview Live)
                     $('.profile-user-img').attr('src', canvas.toDataURL());
 
-                    // 5. Enable Checkbox
+                    // Enable Checkbox
                     $('#ceklis').prop('disabled', false);
 
                     $modal.modal('hide');
@@ -475,7 +475,7 @@
                     // Sembunyikan tombol batal (karena sudah balik ke ori)
                     $(this).hide();
                 } else {
-                    // KASUS B: User baru (Gak punya foto) -> Balik ke Upload Area
+                    // KASUS B: User baru
                     $('#preview-area').hide();
                     $('#upload-area').fadeIn();
                 }
@@ -501,8 +501,6 @@
                     if (result.isConfirmed) $('#form-profile').submit();
                 });
             });
-            // ===== End Logic Update Foto Profil =====
-
         });
     </script>
 @endsection
