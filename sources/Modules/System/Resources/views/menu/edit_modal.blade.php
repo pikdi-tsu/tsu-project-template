@@ -16,8 +16,16 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="{{ $menu->icon }}"></i></span>
                         </div>
-                        <input type="text" name="icon" class="form-control" value="{{ $menu->icon }}">
+                        <input type="text" name="icon" class="form-control" value="{{ $menu->icon }}" placeholder="Icon Kosong">
                     </div>
+                    <small class="text-muted d-block mt-1">
+                        Kosongkan untuk default: <i class="fas fa-box mx-1"></i><code>fas fa-box</code>
+                    </small>
+                    <small>
+                        <a href="https://fontawesome.com/search?ic=free-collection" target="_blank" class="text-info">
+                            <i class="fas fa-external-link-alt mr-1"></i> Lihat Referensi Icon Disini
+                        </a>
+                    </small>
                 </div>
             </div>
             <div class="col-md-6">
