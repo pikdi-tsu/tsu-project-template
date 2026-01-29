@@ -36,6 +36,24 @@ class MenuSidebar extends Model
         return $this->belongsTo(__CLASS__, 'parent_id');
     }
 
+    // Cek menu (atau keturunannya) sedang aktif
+    public function isActive()
+    {
+        // Cek self menu
+        if ($this->route && request()->routeIs($this->route . '*')) {
+            return true;
+        }
+
+        // Cek child (Recursive Check)
+        foreach ($this->children as $child) {
+            if ($child->isActive()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function scopeActive($query)
     {
         return $query->where('isactive', 1);

@@ -22,7 +22,7 @@ class MenuController extends MiddlewareController
     public function index()
     {
         $permissions = Permission::query()->orderBy('name')->pluck('name', 'name');
-        $parents = MenuSidebar::query()->whereNull('parent_id')->orderBy('order')->pluck('name', 'id');
+        $parents = $this->getHierarchicalParents();
 
         return view('system::menu.index', [
             'title' => 'Manajemen Menu Sidebar',
@@ -31,32 +31,77 @@ class MenuController extends MiddlewareController
         ]);
     }
 
+    private function getHierarchicalParents($ignoreId = null)
+    {
+        $nodes = MenuSidebar::query()->whereNull('parent_id')->orderBy('order')->with('children')->get();
+        $options = [];
+
+        foreach ($nodes as $node) {
+            if ($node->id === $ignoreId) {
+                continue;
+            }
+
+            $options[$node->id] = $node->name;
+
+            // Panggil fungsi rekursif child
+            $this->recurseChildren($node, $options, $ignoreId, 1);
+        }
+
+        return $options;
+    }
+
+    private function recurseChildren($parent, &$options, $ignoreId, $depth)
+    {
+        foreach ($parent->children as $child) {
+            if ($child->id === $ignoreId) {
+                continue;
+            }
+
+            // Prefix menjorok (Contoh: "— — Nama Submenu")
+            $prefix = str_repeat('— ', $depth);
+            $options[$child->id] = $prefix . $child->name;
+
+            // Cek children
+            $this->recurseChildren($child, $options, $ignoreId, $depth + 1);
+        }
+    }
+
     public function datatable()
     {
-        // Ambil data dari tabel system_menu_sidebars
-        $data = MenuSidebar::query()
-            ->with('parent')
-            ->orderBy('parent_id', 'asc')
-            ->orderBy('order', 'asc');
+        // Ambil data
+        $allMenus = MenuSidebar::query()->orderBy('order', 'asc')->get();
 
-        return DataTables::of($data)
+        // Urutan hirarki (Bapak -> Anak -> Cucu)
+        $sortedData = $this->sortTree($allMenus);
+
+        return DataTables::of($sortedData)
             ->addIndexColumn()
             ->editColumn('name', function ($d) {
-                if ($d->parent_id) {
-                    return '<span class="pl-3 text-muted"><i class="fas fa-angle-right mr-1"></i> ' . $d->name . '</span> <small class="text-xs text-gray">(' . $d->parent->name . ')</small>';
+                // VISUALISASI HIERARKI (POHON)
+                $padding = $d->depth * 25;
+                $iconPohon = '';
+                if ($d->depth > 0) {
+                    $iconPohon = '<i class="fas fa-level-up-alt fa-rotate-90 text-gray mr-2" style="font-size: 0.8rem; margin-left: -15px;"></i>';
                 }
-                return '<b>' . $d->name . '</b>';
+                $colorClass = match ((int)$d->depth) {
+                    0 => 'text-dark font-weight-bold',
+                    1 => 'text-primary',
+                    default => 'text-muted',
+                };
+                return '<div style="padding-left: '.$padding.'px;" class="'.$colorClass.'">' . $iconPohon . $d->name . '</div>';
             })
             ->editColumn('route', function($d) {
-                return $d->route ? '<code class="text-primary">'.$d->route.'</code>' : '<span class="text-muted">-</span>';
+                return $d->route && $d->route !== '#'
+                    ? '<code class="text-dark">'.$d->route.'</code>'
+                    : '<span class="text-muted text-xs font-italic">Label / Group</span>';
             })
             ->addColumn('permission', function ($d) {
                 return $d->permission_name
-                    ? '<span class="badge badge-info"><i class="fas fa-lock text-xs"></i> '.$d->permission_name.'</span>'
-                    : '<span class="badge badge-secondary">Public</span>';
+                    ? '<span class="badge badge-info"><i class="fas fa-lock text-xs mr-1"></i> '.$d->permission_name.'</span>'
+                    : '<span class="badge badge-light border">Public</span>';
             })
             ->addColumn('status', function ($d) {
-                $warna = $d->isactive ? 'success' : 'danger';
+                $warna = $d->isactive ? 'success' : 'secondary';
                 $text  = $d->isactive ? 'Aktif' : 'Non-Aktif';
                 return '<span class="badge badge-'.$warna.'">'.$text.'</span>';
             })
@@ -66,46 +111,48 @@ class MenuController extends MiddlewareController
                 $isSystemCore = Str::contains($row->route, 'dashboard');
 
                 if (!$canEdit && !$canDelete) {
-                    return '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed;" title="Anda tidak memiliki akses ke action ini">
-                                <i class="fas fa-lock mr-1"></i> Locked
-                            </span>';
+                    return '';
                 }
 
-                // Edit action
-                if ($canEdit) {
-                    $btnEdit = '<a href="'.route('system.menu.edit', $row->id).'" class="btn btn-xs btn-warning btn-edit" title="Edit Menu"><i class="fas fa-edit"></i></a>';
-                } else {
-                    $btnEdit = '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.6;" title="Edit (No Access)">
-                                    <i class="fas fa-lock"></i>
-                                 </span>';
-                }
+                $btnEdit = $canEdit ? '<a href="'.route('system.menu.edit', $row->id).'" class="btn btn-xs btn-warning btn-edit mr-1" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '';
 
-                // Delete action
+                $btnDel = '';
                 if ($canDelete) {
                     if ($isSystemCore) {
-                        $btnDel = '<span class="badge badge-info p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.8;" title="Protected: Menu Core">
-                                    <i class="fas fa-shield-alt"></i>
-                                 </span>';
+                        $btnDel = '<button class="btn btn-xs btn-secondary" disabled title="System Core"><i class="fas fa-lock"></i></button>';
                     } else {
                         $btnDel = '<form action="'.route('system.menu.destroy', $row->id).'" method="POST" style="display:inline;">
                                         '.csrf_field().' '.method_field('DELETE').'
-                                        <button type="submit" class="btn btn-xs btn-danger btn-delete" title="Hapus Menu">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <button type="submit" class="btn btn-xs btn-danger btn-delete" title="Hapus"><i class="fas fa-trash"></i></button>
                                     </form>';
                     }
-                } else {
-                    $btnDel = '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.6;" title="No Access: Delete">
-                                    <i class="fas fa-lock"></i>
-                                </span>';
                 }
-
-                return $btnEdit . ' ' . $btnDel;
+                return $btnEdit . $btnDel;
             })
-
-            // Jangan lupa daftarkan kolom yang mengandung HTML
+            ->setRowClass(function ($d) {
+                return $d->depth === 0 ? 'table-secondary' : '';
+            })
             ->rawColumns(['name', 'route', 'permission', 'status', 'action'])
             ->make(true);
+    }
+
+    private function sortTree($menus, $parentId = null, $depth = 0)
+    {
+        $result = collect([]);
+        $children = $menus->where('parent_id', $parentId)->sortBy('order');
+
+        foreach ($children as $child) {
+            // Depth object menu
+            $child->setAttribute('depth', $depth);
+
+            // Masukkan parent ke hasil
+            $result->push($child);
+
+            // Cari recursive children dengan depth + 1
+            $result = $result->merge($this->sortTree($menus, $child->id, $depth + 1));
+        }
+
+        return $result;
     }
 
     public function store(Request $request)
@@ -117,7 +164,7 @@ class MenuController extends MiddlewareController
 
         MenuSidebar::query()->create([
             'name'            => $request->name,
-            'icon'            => $request->icon,
+            'icon'            => $request->icon ?: 'fas fa-box',
             'route'           => $request->route,
             'permission_name' => $request->permission_name,
             'parent_id'       => $request->parent_id,
@@ -134,12 +181,8 @@ class MenuController extends MiddlewareController
         $menu = MenuSidebar::query()->findOrFail($id);
         $permissions = Permission::query()->orderBy('name')->pluck('name', 'name');
 
-        // Ambil parent kecuali dirinya sendiri (biar gak infinite loop)
-        $parents = MenuSidebar::query()
-            ->whereNull('parent_id')
-            ->where('id', '!=', $id)
-            ->orderBy('order')
-            ->pluck('name', 'id');
+        // Ambil parent
+        $parents = $this->getHierarchicalParents($id);
 
         // KITA RETURN VIEW PARTIAL (Khusus untuk dimuat di dalam Modal)
         return view('system::menu.edit_modal', compact('menu', 'permissions', 'parents'));

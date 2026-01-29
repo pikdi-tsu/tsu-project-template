@@ -11,6 +11,10 @@
         <div class="card-header">
             <h3 class="card-title">Manajemen Menu</h3>
             <div class="card-tools">
+                {{-- Tombol Dropdown Panduan--}}
+                <button class="btn btn-outline-info btn-sm btn-flat" type="button" data-toggle="collapse" data-target="#panduanInfo" aria-expanded="false" aria-controls="panduanInfo">
+                    <i class="fas fa-info-circle mr-1"></i> Bantuan: Cara Baca Tabel
+                </button>
                 @can('system:menu:create')
                     <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-create">
                         <i class="fa fa-plus"></i> Tambah Menu
@@ -25,7 +29,27 @@
 
         {{-- BODY (Tabel ada disini) --}}
         <div class="card-body">
-            <div class="table-responsive"> {{-- Biar tabel bisa discroll kalo layar kecil --}}
+            {{-- Panduan Hirarki --}}
+            <div class="collapse" id="panduanInfo">
+                <div class="callout callout-info mb-4 shadow-sm">
+                    <h5 class="text-info text-sm font-weight-bold">Panduan Hierarki Menu</h5>
+                    <ul class="mb-0 mt-2 text-sm pl-4">
+                        <li class="mb-1">
+                            <span class="badge badge-secondary px-2 py-1">Row Abu-abu</span> :
+                            <b>Menu Utama / Level 0</b> (Contoh: Dashboard, Master Data).
+                        </li>
+                        <li class="mb-1">
+                            <span class="text-primary font-weight-bold">Nama Menu Biru</span> :
+                            <b>Sub-Menu Level 1</b> (Anak Langsung).
+                        </li>
+                        <li>
+                            <span class="text-muted">Nama Menu Abu-abu</span> :
+                            <b>Sub-Menu Level 2 dst</b> (Cucu/Cicit).
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover" id="table-menu" style="width: 100%;">
                     <thead class="bg-light">
                     <tr>
@@ -39,7 +63,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {{-- KOSONGKAN INI: Biarkan DataTables yang isi lewat AJAX --}}
+                    {{-- Diisi lewat AJAX --}}
                     </tbody>
                 </table>
             </div>
@@ -69,11 +93,19 @@
                                 <div class="form-group">
                                     <label>Icon (FontAwesome)</label>
                                     <div class="input-group">
-                                        <input type="text" name="icon" class="form-control" placeholder="fas fa-circle">
+                                        <input type="text" name="icon" class="form-control" placeholder="Default: fas fa-box">
                                         <div class="input-group-append">
                                             <span class="input-group-text"><i class="fas fa-info"></i></span>
                                         </div>
                                     </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Kosongkan untuk default: <i class="fas fa-box mx-1"></i><code>fas fa-box</code>
+                                    </small>
+                                    <small>
+                                        <a href="https://fontawesome.com/search?ic=free-collection" target="_blank" class="text-info">
+                                            <i class="fas fa-external-link-alt mr-1"></i> Lihat Referensi Icon Disini
+                                        </a>
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">

@@ -17,7 +17,7 @@ class MenuSeeder extends Seeder
             'name' => 'Dashboard',
             'route' => 'dashboard',
             'icon' => 'fas fa-tachometer-alt',
-            'order' => 1,
+            'order' => -99,
             'permission_name' => '',
         ]);
 
@@ -35,6 +35,7 @@ class MenuSeeder extends Seeder
             'name' => 'Users',
             'route' => 'system.user.index',
             'parent_id' => $system->id,
+            'order' => 0,
             'permission_name' => 'system:user:view',
             'icon' => 'fas fa-users',
         ]);
@@ -44,6 +45,7 @@ class MenuSeeder extends Seeder
             'name' => 'Roles',
             'route' => 'system.role.index',
             'parent_id' => $system->id,
+            'order' => 1,
             'icon' => 'fas fa-user-shield',
             'permission_name' => 'system:role:view',
         ]);
@@ -53,6 +55,7 @@ class MenuSeeder extends Seeder
             'name' => 'Role Permissions',
             'route' => 'system.permission.index',
             'parent_id' => $system->id,
+            'order' => 2,
             'icon' => 'fas fa-file-shield',
             'permission_name' => 'system:permission:view',
         ]);
@@ -63,6 +66,7 @@ class MenuSeeder extends Seeder
             'route' => 'system.menu.index',
             'parent_id' => $system->id,
             'permission_name' => 'system:menu:view',
+            'order' => 3,
             'icon' => 'fas fa-list',
         ]);
     }
