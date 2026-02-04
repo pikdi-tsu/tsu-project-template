@@ -81,6 +81,8 @@ class UserController extends MiddlewareController
 
     public function sync(UserSyncService $syncer)
     {
+        $this->guard('create', 'system:user');
+
         $homebaseUrl  = config('app.tsu_homebase.url');
         $clientId     = config('app.oauth.client.id');
         $clientSecret = config('app.oauth.client.secret');
@@ -151,6 +153,8 @@ class UserController extends MiddlewareController
     // Hapus User
     public function destroy($id)
     {
+        $this->guard('delete', 'system:user');
+
         $user = User::query()->findOrFail($id);
 
         // Proteksi Tambahan: Jangan hapus diri sendiri

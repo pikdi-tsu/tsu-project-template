@@ -80,6 +80,8 @@ class RoleController extends MiddlewareController
 
     public function sync()
     {
+        $this->guard('create', 'system:role');
+
         try {
             // PERSIAPAN DATA KUNCI
             $baseUrl = config('app.tsu_homebase.url');
@@ -157,6 +159,8 @@ class RoleController extends MiddlewareController
     // Modal Edit Permission
     public function edit($id)
     {
+        $this->guard('edit', 'system:role');
+
         $role = Role::query()->findOrFail($id);
 
         // Ambil SEMUA Permission LOKAL Siakad
@@ -179,6 +183,8 @@ class RoleController extends MiddlewareController
     // Simpan Perubahan Permission
     public function update(Request $request, $id)
     {
+        $this->guard('edit', 'system:role');
+
         $role = Role::query()->findOrFail($id);
 
         // Validasi: Nama role Read Only

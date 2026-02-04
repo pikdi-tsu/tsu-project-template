@@ -75,38 +75,38 @@ Route::prefix('')->group(function() {
             Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
         });
 
-        //Setting
-        Route::prefix('setting')->middleware(['auth'])->name('setting.')->group(function(){
-            //User Management
-            Route::get('/usermanagement', [SettingController::class, 'userManagement'])->name('show.userManagement');
-            Route::get('/tabelPegawai', [SettingController::class, 'table_pegawai'])->name('show.tabelPegawai');
-            Route::get('/tabelMahasiswa', [SettingController::class, 'table_mahasiswa'])->name('show.tabelMahasiswa');
-            Route::get('/finduser', [SettingController::class, 'searchNama'])->name('show.finduser');
-            Route::post('/StoreUser', [SettingController::class, 'StoreUser'])->name('show.saveUser');
-            Route::get('/detailuser/{params}', [SettingController::class, 'DetailUser'])->name('show.detailuser');
-            Route::get('/deleteuser/{params}', [SettingController::class, 'DeleteUser'])->name('show.deleteuser');
-
-            //User Reset
-            Route::get('/userreset', [SettingController::class, 'UserReset'])->name('UserReset.show');
-            Route::get('/userreset_tabelPegawai', [SettingController::class, 'UserReset_TablePegawai'])->name('UserReset.tabelPegawai');
-            Route::get('/userreset_tabelMahasiswa', [SettingController::class, 'UserReset_TableMahasiswa'])->name('UserReset.tabelMahasiswa');
-            Route::get('/ResetPassword/{params}', [SettingController::class, 'ResetPassword'])->name('UserReset.ResetPassword');
-            Route::get('/ResetQA/{params}', [SettingController::class, 'ResetQA'])->name('UserReset.ResetQA');
-
-            //List Menu
-            Route::get('/ShowMenu', [SettingController::class, 'ShowMenu'])->name('menu.show');
-            Route::get('/LisMenu', [SettingController::class, 'table_menu'])->name('menu.TabelMenu');
-            Route::post('/SaveUpdateMenu', [SettingController::class, 'SaveUpdateMenu'])->name('menu.SaveMenu');
-            Route::get('/GetMenu/{params}', [SettingController::class, 'GetMenu'])->name('menu.GetMenu');
-            Route::get('/DeleteAktif/{params1}/{params2}', [SettingController::class, 'DeleteMenu'])->name('menu.DeleteAktif');
-
-            //Group User
-            Route::get('/ShowGroupUser', [SettingController::class, 'ShowGroupUser'])->name('gruopuser.show');
-            Route::get('/LisGroupUser', [SettingController::class, 'table_groupuser'])->name('gruopuser.TabelGroupUser');
-            Route::post('/SaveUpdateGroupUser', [SettingController::class, 'SaveUpdateGroupUser'])->name('gruopuser.Save');
-            Route::get('/GetGroupUser/{params}', [SettingController::class, 'GetGroupUser'])->name('gruopuser.GetGroupUser');
-            Route::get('/ShowPrivilege/{params}', [SettingController::class, 'ShowPrivilege'])->name('gruopuser.ShowPrivilege');
-            Route::post('/SavePrivilege/{params}', [SettingController::class, 'StorePrivilege'])->name('gruopuser.SavePrivilege');
-        });
+//        //Setting
+//        Route::prefix('setting')->middleware(['auth'])->name('setting.')->group(function(){
+//            //User Management
+//            Route::get('/usermanagement', [SettingController::class, 'userManagement'])->name('show.userManagement');
+//            Route::get('/tabelPegawai', [SettingController::class, 'table_pegawai'])->name('show.tabelPegawai');
+//            Route::get('/tabelMahasiswa', [SettingController::class, 'table_mahasiswa'])->name('show.tabelMahasiswa');
+//            Route::get('/finduser', [SettingController::class, 'searchNama'])->name('show.finduser');
+//            Route::post('/StoreUser', [SettingController::class, 'StoreUser'])->name('show.saveUser');
+//            Route::get('/detailuser/{params}', [SettingController::class, 'DetailUser'])->name('show.detailuser');
+//            Route::get('/deleteuser/{params}', [SettingController::class, 'DeleteUser'])->name('show.deleteuser');
+//
+//            //User Reset
+//            Route::get('/userreset', [SettingController::class, 'UserReset'])->name('UserReset.show');
+//            Route::get('/userreset_tabelPegawai', [SettingController::class, 'UserReset_TablePegawai'])->name('UserReset.tabelPegawai');
+//            Route::get('/userreset_tabelMahasiswa', [SettingController::class, 'UserReset_TableMahasiswa'])->name('UserReset.tabelMahasiswa');
+//            Route::get('/ResetPassword/{params}', [SettingController::class, 'ResetPassword'])->name('UserReset.ResetPassword');
+//            Route::get('/ResetQA/{params}', [SettingController::class, 'ResetQA'])->name('UserReset.ResetQA');
+//
+//            //List Menu
+//            Route::get('/ShowMenu', [SettingController::class, 'ShowMenu'])->name('menu.show');
+//            Route::get('/LisMenu', [SettingController::class, 'table_menu'])->name('menu.TabelMenu');
+//            Route::post('/SaveUpdateMenu', [SettingController::class, 'SaveUpdateMenu'])->name('menu.SaveMenu');
+//            Route::get('/GetMenu/{params}', [SettingController::class, 'GetMenu'])->name('menu.GetMenu');
+//            Route::get('/DeleteAktif/{params1}/{params2}', [SettingController::class, 'DeleteMenu'])->name('menu.DeleteAktif');
+//
+//            //Group User
+//            Route::get('/ShowGroupUser', [SettingController::class, 'ShowGroupUser'])->name('gruopuser.show');
+//            Route::get('/LisGroupUser', [SettingController::class, 'table_groupuser'])->name('gruopuser.TabelGroupUser');
+//            Route::post('/SaveUpdateGroupUser', [SettingController::class, 'SaveUpdateGroupUser'])->name('gruopuser.Save');
+//            Route::get('/GetGroupUser/{params}', [SettingController::class, 'GetGroupUser'])->name('gruopuser.GetGroupUser');
+//            Route::get('/ShowPrivilege/{params}', [SettingController::class, 'ShowPrivilege'])->name('gruopuser.ShowPrivilege');
+//            Route::post('/SavePrivilege/{params}', [SettingController::class, 'StorePrivilege'])->name('gruopuser.SavePrivilege');
+//        });
     });
 });

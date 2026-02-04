@@ -157,6 +157,8 @@ class MenuController extends MiddlewareController
 
     public function store(Request $request)
     {
+        $this->guardStore($request->id, 'system:menu');
+
         $request->validate([
             'name' => 'required',
             'order' => 'required|integer',
@@ -178,6 +180,8 @@ class MenuController extends MiddlewareController
 
     public function edit($id)
     {
+        $this->guard('edit', 'system:menu');
+
         $menu = MenuSidebar::query()->findOrFail($id);
         $permissions = Permission::query()->orderBy('name')->pluck('name', 'name');
 
@@ -190,6 +194,8 @@ class MenuController extends MiddlewareController
 
     public function update(Request $request, $id)
     {
+        $this->guard('edit', 'system:menu');
+
         $menu = MenuSidebar::query()->findOrFail($id);
 
         $menu->update([
@@ -207,6 +213,8 @@ class MenuController extends MiddlewareController
 
     public function destroy($id)
     {
+        $this->guard('delete', 'system:menu');
+
         $menu = MenuSidebar::withCount('children')->findOrFail($id);
 
         if ($menu->children_count > 0) {
