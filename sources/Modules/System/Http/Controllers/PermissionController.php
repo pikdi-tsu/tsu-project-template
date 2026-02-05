@@ -35,37 +35,7 @@ class PermissionController extends MiddlewareController
                 return '<span class="badge badge-secondary">'.$row->guard_name.'</span>';
             })
             ->addColumn('action', function ($row) {
-                $canEdit   = auth()->user()->can('system:permission:edit');
-                $canDelete = auth()->user()->can('system:permission:delete');
-
-                if (!$canEdit && !$canDelete) {
-                    return '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed;" title="Anda tidak memiliki akses ke action ini">
-                                <i class="fas fa-lock mr-1"></i> Locked
-                            </span>';
-                }
-
-                // Edit action
-                if ($canEdit) {
-                    $btnEdit = '<button type="button" class="btn btn-xs btn-warning btn-edit" data-id="'.$row->id.'" data-name="'.$row->name.'" title="Edit"><i class="fas fa-edit"></i></button>';
-                } else {
-                    $btnEdit = '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.6;" title="Edit (No Access)">
-                                    <i class="fas fa-lock"></i>
-                                 </span>';
-                }
-
-                // Delete action
-                if ($canDelete) {
-                    $btnDel  = '<form action="'.route('system.permission.destroy', $row->id).'" method="POST" style="display:inline;">
-                                    '.csrf_field().' '.method_field('DELETE').'
-                                    <button type="button" class="btn btn-xs btn-danger btn-delete" title="Hapus"><i class="fas fa-trash"></i></button>
-                                </form>';
-                } else {
-                    $btnDel = '<span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.6;" title="No Access: Delete">
-                                    <i class="fas fa-lock"></i>
-                                </span>';
-                }
-
-                return $btnEdit . ' ' . $btnDel;
+                $this->getActionButtons($row, 'system:permission');
             })
             ->rawColumns(['guard_name', 'action'])
             ->make(true);
@@ -73,6 +43,8 @@ class PermissionController extends MiddlewareController
 
     public function store(Request $request)
     {
+        $this->guardStore($request->id, 'system:permission');
+
         $tablePermission = config('auth.providers.users.table');
 
         $request->validate([
@@ -86,6 +58,8 @@ class PermissionController extends MiddlewareController
 
     public function edit($id)
     {
+        $this->guard('edit', 'system:permission');
+
         $role = Role::query()->findOrFail($id);
 
         $permissions = Permission::query()->orderBy('name')->get();
@@ -103,6 +77,8 @@ class PermissionController extends MiddlewareController
 
     public function update(Request $request, $id)
     {
+        $this->guard('edit', 'system:permission');
+
         $permission = Permission::query()->findOrFail($id);
         $tablePermission = config('auth.providers.users.table');
 
@@ -117,6 +93,8 @@ class PermissionController extends MiddlewareController
 
     public function destroy($id)
     {
+        $this->guard('delete', 'system:permission');
+
         $permission = Permission::query()->findOrFail($id);
         $permission->delete();
 
