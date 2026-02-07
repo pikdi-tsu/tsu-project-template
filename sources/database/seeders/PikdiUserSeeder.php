@@ -31,6 +31,7 @@ class PikdiUserSeeder extends Seeder
                 'username'          => $username,
                 'password'          => Hash::make($password),
                 'email_verified_at' => now(),
+                'unit'              => 'Pusat Informasi, Komunikasi, dan Digital',
                 'isactive'          => 1,
                 'last_login_at'     => now(),
                 'sso_id'            => null, // Null karena akun lokal

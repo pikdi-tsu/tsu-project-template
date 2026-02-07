@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'avatar_url',
+        'unit',
         'isactive',
         'sso_access_token',
         'sso_refresh_token',
