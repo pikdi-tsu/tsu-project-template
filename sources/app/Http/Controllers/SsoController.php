@@ -58,8 +58,8 @@ class SsoController extends Controller
         }
 
         // Validasi Code
-        if (! $request->code) {
-            return redirect('/login')->with('error', 'Login SSO Gagal: Authorization Code tidak ditemukan.');
+        if (!$request->code) {
+            return redirect()->route('login')->with('error', '[TSU_SSO_CODE] Login SSO Gagal: Authorization Code tidak ditemukan.');
         }
 
         try {
@@ -74,10 +74,16 @@ class SsoController extends Controller
             ]);
 
             if ($response->failed()) {
-                return redirect()->route('login')->with('error', 'Gagal menukar token dengan server SSO.');
+                // Log SSO token error
+                Log::error("[TSU_SSO_TOKEN_ERR] SSO Token Exchange Failed: " . $response->body());
+                return redirect()->route('login')->with('error', '[TSU_SSO_TOKEN_ERR] Gagal menukar token dengan server SSO.');
             }
 
             $accessToken = $response->json()['access_token'];
+
+            if (!$accessToken) {
+                throw new \Exception("[TSU_SSO_TOKEN_EMPTY] Respon token dari Homebase kosong.");
+            }
 
             // Ambil Data Profil User dari Homebase
             // Note: hapus withoutVerifying() saat production (https)
@@ -87,21 +93,27 @@ class SsoController extends Controller
                 ->get(config('app.tsu_homebase.url') . '/api/v1/profile');
 
             if ($userResponse->failed()) {
-                return redirect()->route('login')->with('error', 'Gagal mengambil data profil user.');
+                // Log gagal proses data profil user
+                Log::error("[TSU_SSO_PROFILE_ERR] Gagal user data profil: " . $userResponse->body());
+                return redirect()->route('login')->with('error', '[TSU_SSO_PROFILE_ERR] Gagal mengambil data profil user.');
             }
 
             $userData = $userResponse->json();
 
             try {
-                $user = $syncer->handle($userData, $accessToken);
+                $result = $syncer->handle($userData, $accessToken);
 
                 // Simpan token di session
                 session(['homebase_access_token' => $accessToken]);
+
+                $user = $result['user'];
 
                 Auth::login($user);
 
                 // Cek role user dari Spatie atau UserSync
                 $roles = $user->getRoleNames()->toArray();
+                $profil = null;
+                $roleAktif = 'user';
 
                 // Prioritas Dosen
                 if (in_array('dosen', $roles, true) || in_array('tendik', $roles, true)) {
@@ -121,30 +133,57 @@ class SsoController extends Controller
                 }
 
                 return redirect()->route('dashboard')
-                    ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
+                    ->with('success', 'Login Berhasil! Selamat Datang, ' . $user->name);
             } catch (\Exception $e) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                // Log gagal login
+                if (str_contains($e->getMessage(), '[TSU_')) {
+                    // Kalau ada Tag, berarti itu pesan validasi untuk User. TAMPILKAN!
+                    return redirect()->route('login')->with('error', $e->getMessage());
+                }
+
+                Log::error("[TSU_SSO_SYNC_FAIL] Gagal proses login: ", [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 return redirect()->route('login')
-                    ->with('alert', ['title' => 'AKSES DITOLAK', 'message' => $e->getMessage(), 'status' => 'danger']);
+                    ->with('error', '[TSU_SSO_SYNC_FAIL] Gagal login, cek kembali username dan password.');
             }
         } catch (ConnectionException $e) {
-            // KASUS: HOMEBASE Down
+            // Log HOMEBASE Down
+            Log::critical("[TSU_SSO_CONN_REFUSED] Gagal menghubungi Homebase.", [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->view('system::errors.index', [
                 'title' => 'Server SSO Tidak Dapat Dihubungi',
-                'message' => 'Sistem tidak dapat terhubung ke TSU Homebase. Kemungkinan server sedang down atau ada gangguan jaringan. Silakan coba sesaat lagi.',
+                'message' => '[TSU_SSO_CONN_REFUSED] Sistem tidak dapat terhubung ke TSU Homebase. Kemungkinan server sedang down atau ada gangguan jaringan. Silakan coba sesaat lagi.',
                 'code' => 503
             ], 503);
 
         } catch (\InvalidArgumentException $e) {
-            // KASUS: STATE MISMATCH
+            // Log login SSO expired
             return redirect()->route('login')
-                ->with('error', 'Sesi login kadaluarsa. Silakan coba login ulang.');
+                ->with('error', 'Sesi login SSO kadaluarsa. Silakan coba login ulang.');
 
         } catch (\Exception $e) {
-            // KASUS: ERROR LAIN-LAIN (General)
-            Log::error($e->getMessage());
+            // ERROR LAIN-LAIN (General)
+            Log::critical("[TSU_SSO_CRITICAL] Error fatal di callback.", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->view('system::errors.index', [
                 'title' => 'Terjadi Kesalahan Login',
-                'message' => 'Terjadi kesalahan teknis saat memproses login',
+                'message' => '[TSU_SSO_CRITICAL] Terjadi kesalahan teknis saat memproses login.',
                 'code' => 500
             ], 500);
         }

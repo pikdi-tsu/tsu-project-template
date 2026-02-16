@@ -35,7 +35,7 @@ class PermissionController extends MiddlewareController
                 return '<span class="badge badge-secondary">'.$row->guard_name.'</span>';
             })
             ->addColumn('action', function ($row) {
-                $this->getActionButtons($row, 'system:permission');
+                return $this->getActionButtons($row, 'system:permission');
             })
             ->rawColumns(['guard_name', 'action'])
             ->make(true);
