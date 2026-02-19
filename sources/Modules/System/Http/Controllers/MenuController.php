@@ -111,23 +111,41 @@ class MenuController extends MiddlewareController
                 $isSystemCore = Str::contains($row->route, 'dashboard');
 
                 if (!$canEdit && !$canDelete) {
-                    return '';
+                    return '<div class="text-center">
+                                <span class="badge badge-secondary p-1 shadow-sm" style="cursor: not-allowed; opacity:0.7" title="Akses Dibatasi">
+                                    <i class="fas fa-lock mr-1"></i> Locked
+                                </span>
+                            </div>';
                 }
 
-                $btnEdit = $canEdit ? '<a href="'.route('system.menu.edit', $row->id).'" class="btn btn-xs btn-warning btn-edit mr-1" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '';
+                $btn = '<div class="text-center">';
 
-                $btnDel = '';
+                if ($canEdit) {
+                    $btn .= '<a href="'.route('system.menu.edit', $row->id).'" class="btn btn-xs btn-warning btn-edit mr-1" title="Edit">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>';
+                } else {
+                    $btn .= '<button type="button" class="btn btn-secondary btn-sm mr-1" disabled style="cursor:not-allowed; opacity:0.6" title="No Access">
+                                <i class="fas fa-lock"></i>
+                             </button>';
+                }
+
                 if ($canDelete) {
                     if ($isSystemCore) {
-                        $btnDel = '<button class="btn btn-xs btn-secondary" disabled title="System Core"><i class="fas fa-lock"></i></button>';
+                        $btn .= '<button class="btn btn-xs btn-secondary" disabled title="System Core"><i class="fas fa-lock"></i></button>';
                     } else {
-                        $btnDel = '<form action="'.route('system.menu.destroy', $row->id).'" method="POST" style="display:inline;">
+                        $btn .= '<form action="'.route('system.menu.destroy', $row->id).'" method="POST" style="display:inline;">
                                         '.csrf_field().' '.method_field('DELETE').'
                                         <button type="submit" class="btn btn-xs btn-danger btn-delete" title="Hapus"><i class="fas fa-trash"></i></button>
                                     </form>';
                     }
+                } else {
+                    $btn .= '<button type="button" class="btn btn-secondary btn-sm" disabled style="cursor:not-allowed; opacity:0.6" title="No Access">
+                                <i class="fas fa-lock"></i>
+                             </button>';
                 }
-                return $btnEdit . $btnDel;
+
+                return $btn;
             })
             ->setRowClass(function ($d) {
                 return $d->depth === 0 ? 'table-secondary' : '';

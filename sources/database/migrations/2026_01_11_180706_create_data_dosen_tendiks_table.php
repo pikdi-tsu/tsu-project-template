@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('gelar_depan')->nullable();
             $table->string('gelar_belakang')->nullable();
             $table->string('jabatan_fungsional')->nullable(); // Asisten Ahli, Lektor
-            $table->string('status_pegawai')->default('TETAP'); // TETAP, KONTRAK, LB
+            $table->string('status_pegawai')->nullable(); // TETAP, KONTRAK, LB
 
             // --- DATA PRIBADI ---
             $table->string('nik_ktp', 100)->nullable();

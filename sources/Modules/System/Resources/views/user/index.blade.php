@@ -43,6 +43,21 @@
             </table>
         </div>
     </div>
+
+    {{-- ================= MODAL EDIT (AJAX CONTAINER) ================= --}}
+    <div class="modal fade" id="modal-edit">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-edit-content">
+                {{-- Loading State --}}
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Sedang mengambil data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('script')
@@ -96,8 +111,34 @@
                 });
             });
 
+            // Event Listener Tombol Edit
+            $('body').on('click', '.btn-edit', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href') || $(this).data('url');
+
+                if (!url) {
+                    console.error('URL Edit tidak ditemukan!');
+                    return;
+                }
+
+                $('#modal-edit').modal('show')
+                // Reset konten modal ke loading state setiap kali dibuka
+                $('#modal-edit-content').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p>Loading...</p></div>');
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#modal-edit-content').html(response);
+                    },
+                    error: function() {
+                        $('#modal-edit-content').html('<div class="alert alert-danger m-3">Gagal mengambil data menu.</div>');
+                    }
+                });
+            });
+
             // Modal Delete/Kick
-            $('body').on('click', '.btn-kick', function(e) {
+            $('body').on('click', '.btn-delete', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
 

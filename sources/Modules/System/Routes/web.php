@@ -52,7 +52,7 @@ Route::prefix('')->group(function() {
             Route::middleware(['permission:system:role:view'])->group(function() {
                 Route::get('role/json', [RoleController::class, 'datatable'])->name('role.json');
                 Route::post('role/sync', [RoleController::class, 'sync'])->name('role.sync'); // Route Sync
-                Route::resource('role', RoleController::class)->only(['index', 'edit', 'update']);
+                Route::resource('role', RoleController::class);
             });
 
             // Permissions
