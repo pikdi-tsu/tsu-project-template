@@ -31,7 +31,7 @@ class MiddlewareController extends BaseController
     }
 
     /**
-     * * @param object $row           Data dari Datatable ($row)
+     * * @param object $row         Data dari Datatable ($row)
      * @param string $permissionKey Key Permission (cth: 'contact_person')
      * @param string $editClass     Class untuk selector JS Edit
      * @param string $deleteClass   Class untuk selector JS Delete
@@ -40,9 +40,9 @@ class MiddlewareController extends BaseController
     {
 
         $defaultOptions = [
-            'edit_class'   => 'btn-edit',   // Class selector buat jQuery
+            'edit_class'   => 'btn-edit',   // Class selector jQuery
             'delete_class' => 'btn-delete',
-            'edit_url'     => null,         // Kalau diisi, jadi <a href="...">. Kalau null, jadi <button> Modal.
+            'edit_url'     => null,         // URL action form edit
             'delete_url'   => null,         // URL action form delete
             'can_edit'     => null,         // (Bool) Override manual permission edit
             'can_delete'   => null,         // (Bool) Override manual permission delete
@@ -71,17 +71,16 @@ class MiddlewareController extends BaseController
 
         // Edit
         if ($canEdit) {
-            // Validasi URL: Edit butuh URL (entah buat href atau ajax modal)
+            // Validasi URL
             $url = $opt['edit_url'] ?? '#';
 
             if ($opt['use_modal'] === false) {
-                // CASE A: Link Pindah Halaman (Tag <a>)
+                // Link Pindah Halaman (Tag <a>)
                 $btn .= '<a href="' . $url . '" class="btn btn-warning btn-sm mr-1" title="Edit Data">
                         <i class="fas fa-pencil-alt"></i>
                      </a>';
             } else {
-                // CASE B: Modal AJAX (Tag <button>)
-                // 🔥 Perhatikan data-url="$url"
+                // Modal AJAX (Tag <button>)
                 $btn .= '<button type="button"
                             data-id="' . $row->id . '"
                             data-url="' . $url . '"
