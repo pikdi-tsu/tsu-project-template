@@ -33,6 +33,7 @@
                     <th width="5%">No</th>
                     <th>Nama Role</th>
                     <th>Jumlah Izin (Permission)</th>
+                    <th>Tipe Role</th>
                     <th width="15%">Aksi</th>
                 </tr>
                 </thead>
@@ -62,6 +63,7 @@
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'name', name: 'name' },
                     { data: 'permissions_count', name: 'permissions_count', searchable: false },
+                    { data: 'is_identity_badge', name: 'is_identity_badge' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ]
             });

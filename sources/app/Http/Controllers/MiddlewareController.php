@@ -36,7 +36,7 @@ class MiddlewareController extends BaseController
      * @param string $editClass     Class untuk selector JS Edit
      * @param string $deleteClass   Class untuk selector JS Delete
      */
-    protected function getActionButtons(object $row, string $permissionKey, string $editClass = 'btn_edit', string $deleteClass = 'btn_hapus')
+    protected function getActionButtons(object $row, string $permissionKey, string $editClass = 'btn-edit', string $deleteClass = 'btn-delete')
     {
         // Cek Permission User
         $canEdit   = auth()->user()->can($permissionKey . ':edit');
@@ -54,7 +54,7 @@ class MiddlewareController extends BaseController
 
         // Edit
         if ($canEdit) {
-            $btn .= '<button type="button" data-id="' . $row->id . '" class="btn btn-warning btn-sm ' . $editClass . ' mr-1" title="Edit">
+            $btn .= '<button type="button" data-id="' . $row->id . '" data-name="'.$row->name.'" class="btn btn-warning btn-sm ' . $editClass . ' mr-1" title="Edit">
                         <i class="fas fa-pencil-alt"></i>
                      </button>';
         } else {
@@ -65,9 +65,12 @@ class MiddlewareController extends BaseController
 
         // Delete
         if ($canDelete) {
-            $btn .= '<button type="button" data-id="' . $row->id . '" class="btn btn-danger btn-sm ' . $deleteClass . '" title="Hapus">
-                        <i class="fas fa-trash"></i>
-                     </button>';
+            $btn .= '<form action="'.route('system.permission.destroy', $row->id).'" method="POST" style="display:inline;">
+                                    '.csrf_field().' '.method_field('DELETE').'
+                        <button type="button" data-id="' . $row->id . '" class="btn btn-danger btn-sm ' . $deleteClass . '" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>';
         } else {
             $btn .= '<button type="button" class="btn btn-secondary btn-sm" disabled style="cursor:not-allowed; opacity:0.6" title="No Access">
                         <i class="fas fa-lock"></i>

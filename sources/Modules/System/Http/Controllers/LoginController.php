@@ -134,7 +134,7 @@ class LoginController extends Controller
                 Session::put('active_identity', 'ADMIN-PUSAT');
             } else {
                 Auth::logout();
-                return back()->with('alert', ['title' => 'Gagal', 'message' => 'Data Profil (Dosen/Mhs) tidak ditemukan. Hubungi Admin.', 'status' => 'danger']);
+                return back()->with('error', 'Data Profil (Dosen/Mhs) tidak ditemukan. Hubungi Admin.');
             }
 
             // Bersihkan rate limiter dan session block
@@ -142,11 +142,11 @@ class LoginController extends Controller
             $this->clearLoginAttempts($request);
 
             return redirect()->route('dashboard')
-                ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
+                ->with('success', 'Login Berhasil!');
         }
 
         $this->incrementLoginAttempts($request);
-        return back()->with('alert', ['title' => 'Gagal', 'message' => 'Username atau Password salah / Akun tidak aktif.', 'status' => 'danger'])->withInput($request->only('identity'));
+        return back()->with('error', 'Username atau Password salah / Akun tidak aktif.')->withInput($request->only('identity'));
     }
 
     public function logout(Request $request)

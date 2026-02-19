@@ -12,12 +12,12 @@
                     <form action="{{ route('system.user.sync') }}" method="POST" style="display:inline;">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm btn-sync" title="Tarik data terbaru">
-                            <i class="fas fa-sync-alt"></i> Sync Users dari Homebase
+                            <i class="fas fa-sync-alt"></i> Update Users Lokal
                         </button>
                     </form>
                 @else
                     <span class="badge badge-secondary p-2 shadow-sm" style="cursor: not-allowed; opacity: 0.7;" title="Anda tidak memiliki akses ke action ini">
-                        <i class="fas fa-lock mr-1"></i> Sync User (No Access)
+                        <i class="fas fa-lock mr-1"></i> Update Users Lokal (No Access)
                     </span>
                 @endcan
             </div>

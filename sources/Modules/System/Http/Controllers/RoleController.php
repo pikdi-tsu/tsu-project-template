@@ -3,8 +3,10 @@
 namespace Modules\System\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -47,6 +49,26 @@ class RoleController extends MiddlewareController
 
                 return '<span class="badge badge-info">'.$row->permissions_count.' Izin</span>';
             })
+            ->addColumn('is_identity_badge', function ($row) {
+                $moduleName = ucfirst(config('app.module.name'));
+
+                if ($row->is_identity) {
+                    return '<span class="badge badge-info"><i class="fas fa-globe"></i> Global (Homebase)</span>';
+                }
+
+                return '<span class="badge badge-secondary"><i class="fas fa-building"></i> Lokal '. $moduleName .'</span>';
+            })
+            ->filterColumn('is_identity_badge', function($query, $keyword) {
+                $keyword = strtolower($keyword);
+                $moduleName = ucfirst(config('app.module.name'));
+
+                if (str_contains($keyword, 'glob') || str_contains($keyword, 'home')) {
+                    $query->where('is_identity', true);
+                }
+                elseif (str_contains($keyword, 'lok') || str_contains($keyword, $moduleName)) {
+                    $query->where('is_identity', false);
+                }
+            })
             ->addColumn('action', function ($row) {
                 $moduleName = 'super admin ' . config('app.module.name');
                 $superAdminRoles = ['super admin', $moduleName];
@@ -74,85 +96,158 @@ class RoleController extends MiddlewareController
 
                 return $btn ?? null;
             })
-            ->rawColumns(['permissions_count', 'action'])
+            ->rawColumns(['permissions_count', 'is_identity_badge', 'action'])
             ->make(true);
     }
 
     public function sync()
     {
+        // Cek permission user
         $this->guard('create', 'system:role');
 
         try {
-            // PERSIAPAN DATA KUNCI
             $baseUrl = config('app.tsu_homebase.url');
             $clientId = config('app.oauth.client.id');
             $clientSecret = config('app.oauth.client.secret');
 
-            // Tembak ke route Passport: /oauth/token
-            // Hapus without verifying saat production atau deploy
-            $tokenResponse = Http::withoutVerifying()->asForm()->post($baseUrl . '/oauth/token', [
-                'grant_type' => 'client_credentials',
-                'client_id' => $clientId,
-                'client_secret' => $clientSecret,
-                'scope' => '', // Kosongkan jika tidak pakai scope spesifik
-            ]);
-
+            // Ambil Token (Client Credentials)
+            try {
+                $tokenResponse = Http::withoutVerifying()->asForm()->post($baseUrl . '/oauth/token', [
+                    'grant_type'    => 'client_credentials',
+                    'client_id'     => $clientId,
+                    'client_secret' => $clientSecret,
+                    'scope'         => '',
+                ]);
+            } catch (ConnectionException $e) {
+                throw new \Exception("[TSU_CONN_REFUSED] Gagal menghubungi Server Homebase. Cek koneksi internet.");
+            }
 
             if ($tokenResponse->failed()) {
-                return back()->with('error', 'Gagal Otorisasi ke Homebase! Cek Client ID/Secret.');
+                return back()->with('error', '[TSU_AUTH_FAIL] Gagal Otorisasi ke Homebase! Cek Client ID/Secret.');
             }
 
             $accessToken = $tokenResponse->json()['access_token'];
 
-            // Tembak route API Homebase: /api/v1/roles/sync-list
-            // Hapus without verifying saat production atau deploy
-            $dataResponse = Http::withoutVerifying()->withToken($accessToken)->get($baseUrl . '/api/v1/roles/sync-list');
-
-            if ($dataResponse->failed()) {
-                return back()->with('error', 'Gagal mengambil data Role. Status: ' . $dataResponse->status());
+            if (!$accessToken) {
+                throw new \Exception("[TSU_TOKEN_EMPTY] Respon token dari Homebase kosong.");
             }
 
-            // PROSES DATA
+            // Ambil Data Role
+            try {
+                $dataResponse = Http::withoutVerifying()
+                    ->withToken($accessToken)
+                    ->timeout(10) // Jangan lama-lama nunggu
+                    ->get($baseUrl . '/api/v1/roles/sync-list');
+            } catch (ConnectionException $e) {
+                throw new \Exception("[TSU_API_TIMEOUT] Koneksi terputus saat mengambil data Role.");
+            }
+
+            if ($dataResponse->failed()) {
+                throw new \Exception("[TSU_API_ERR] Gagal mengambil data Role. Status: " . $dataResponse->status());
+            }
+
+            // Proses dataa filterr️
             $rolesFromHomebase = $dataResponse->json()['data'];
 
-            if (empty($rolesFromHomebase) || count($rolesFromHomebase) < 1) {
-                return back()->with('error', 'Security Alert: Data Role dari Homebase Kosong! Sinkronisasi dibatalkan untuk mencegah penghapusan data.');
+
+            // Validasi payload kosong
+            if (empty($rolesFromHomebase) || !is_array($rolesFromHomebase)) {
+                // Kita anggap error karena tidak mungkin Homebase tidak punya role sama sekali
+                throw new \Exception("[TSU_DATA_INVALID] Data dari Homebase Kosong atau Format Salah!");
             }
 
             DB::beginTransaction();
-            // Preservation local roles
-            $moduleName = strtolower(config('app.module.name', 'template'));
-            $protectedRoles = [
-                "super admin {$moduleName}",
-                "admin {$moduleName}"
-            ];
 
             $addedCount = 0;
-            foreach($rolesFromHomebase as $roleName) {
-                $role = Role::query()->firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-                if($role->wasRecentlyCreated){
-                    $addedCount++;
+            $validGlobalRoles = [];
+
+            foreach ($rolesFromHomebase as $item) {
+                // Deteksi format (Array Object atau String biasa)
+                $rName = is_array($item) ? ($item['name'] ?? null) : $item;
+                $isIdentity = is_array($item) && (($item['is_identity'] ?? false));
+
+                if ($rName) {
+                    $nameLower = strtolower($rName);
+
+                    // Filter Role Identitas
+                    if ($isIdentity) {
+                        $validGlobalRoles[] = $nameLower;
+
+                        $role = Role::updateOrCreate(
+                            ['name' => $nameLower, 'guard_name' => 'web'],
+                            ['is_identity' => true]
+                        );
+
+                        if ($role->wasRecentlyCreated) {
+                            $addedCount++;
+                        }
+                    }
                 }
             }
 
+            // Logic cleanup role lama dari Homebase dan protect role lokal
             $deletedCount = Role::query()
                 ->where('guard_name', 'web')
-                ->whereNotIn('name', $rolesFromHomebase)
-                ->whereNotIn('name', $protectedRoles)
+                ->where('is_identity', true)
+                ->whereNotIn('name', $validGlobalRoles)
                 ->delete();
 
             DB::commit();
 
-            $msg = "Sinkronisasi Selesai!<br>";
-            if($addedCount > 0) $msg .= "<b>+$addedCount</b> Role baru ditambahkan.<br>";
-            if($deletedCount > 0) $msg .= "<b>-$deletedCount</b> Unknown Role dihapus.<br>";
-            if($addedCount === 0 && $deletedCount === 0) $msg .= "Data Role sudah up-to-date.";
-            $msg .= "<br><small class='text-white'><i>Protected Local Roles: " . implode(', ', $protectedRoles) . "</i></small>";
+            // Notif Settings
+            $msg = "<h6 class='font-weight-bold mb-2'>Sinkronisasi Roles Selesai!</h6>";
+            $msg .= "<ul class='mb-0 pl-3' style='list-style-type: disc;'>";
+
+            if ($addedCount > 0) {
+                $msg .= "<li><b>+$addedCount</b> Role Global Baru ditambahkan.</li>";
+            }
+
+            if ($deletedCount > 0) {
+                $msg .= "<li><b>-$deletedCount</b> Role Global Usang dihapus.</li>";
+            }
+
+            if ($addedCount === 0 && $deletedCount === 0) {
+                $msg .= "<li>Data Role Global sudah <b>Up-to-Date</b>.</li>";
+            }
+            $msg .= "</ul>";
 
             return back()->with('success', $msg);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal Sync: ' . $e->getMessage());
+
+            // Log gagal sync role
+            $rawMessage = $e->getMessage();
+            $errorCode  = "[TSU_ROLE_CRITICAL]"; // Default Code
+            $userMsg    = "Terjadi kesalahan sistem saat sinkronisasi Role.";
+
+            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
+                $errorCode = $matches[0];
+                $userMsg = str_replace($errorCode, '', $rawMessage);
+            } else {
+                // Masking Error Codingan Asli
+                $userMsg = "Terjadi gangguan teknis internal.";
+            }
+
+            Log::error("$errorCode Gagal Sync Role.", [
+                'original_error' => $rawMessage,
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            // Error koneksi internet/server mati
+            if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+                return back()->with('error', 'Gagal menghubungi Server Homebase. Kemungkinan server pusat sedang down atau gangguan jaringan.');
+            }
+
+            // Feedback User
+            $finalErrorMsg = "<div class='text-center'>";
+            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
+            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
+            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
+            $finalErrorMsg .= "</div>";
+
+            // Error Default
+            return back()->with('error', $finalErrorMsg);
         }
     }
 

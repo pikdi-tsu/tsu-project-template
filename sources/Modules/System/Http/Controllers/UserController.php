@@ -5,9 +5,11 @@ namespace Modules\System\Http\Controllers;
 use App\Http\Controllers\MiddlewareController;
 use App\Models\User;
 use App\Services\UserSyncService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
@@ -89,64 +91,175 @@ class UserController extends MiddlewareController
 
         try {
             // Access Token Client Credential
-            // Hapus without verifying saat production
-            $responseToken = Http::withoutVerifying()->post($homebaseUrl . '/oauth/token', [
-                'grant_type'    => 'client_credentials',
-                'client_id'     => $clientId,
-                'client_secret' => $clientSecret,
-                'scope'         => '', // Sesuaikan jika ada scope khusus
-            ]);
+            try {
+                // Hapus without verifying saat production
+                $responseToken = Http::withoutVerifying()->post($homebaseUrl . '/oauth/token', [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'scope' => '', // Sesuaikan jika ada scope khusus
+                ]);
+            } catch (ConnectionException $e) {
+                Log::error("[TSU_CONN_REFUSED] ClientID: ". $clientId, [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw new \Exception("[TSU_CONN_REFUSED] Tidak dapat menghubungi Server Homebase. Cek koneksi internet.");
+            }
 
+            // Error Response (Client ID Salah / Secret Salah)
             if ($responseToken->failed()) {
-                throw new \Exception("Gagal Autentikasi ke Homebase. Cek Client ID/Secret.");
+                $status = $responseToken->status();
+                throw new \Exception("[TSU_AUTH_FAIL] Gagal Otorisasi Client (Status: $status). Cek Client ID/Secret.");
             }
 
             $accessToken = $responseToken->json()['access_token'];
 
+            if (!$accessToken) {
+                throw new \Exception("[TSU_TOKEN_EMPTY] Respon token dari Homebase kosong.");
+            }
+
             // TARIK DATA USER (Pakai Bearer Token)
             $apiUrl = $homebaseUrl . '/api/v1/users/sync';
 
-            $response = Http::withoutVerifying()->withToken($accessToken)
-                ->withHeaders(['Accept' => 'application/json'])
-                ->timeout(60)
-                ->get($apiUrl);
+            // Variable Counter
+            $stats = [
+                'processed' => 0,
+                'updated'   => 0,
+                'uptodate'  => 0,
+                'failed'    => 0,
+            ];
 
-            if ($response->failed()) {
-                throw new \Exception("Gagal mengambil data user. Status: " . $response->status());
-            }
+            // Chunking Process (Looping User Lokal)
+            User::query()
+                ->whereNotNull('email')
+                ->chunk(50, function ($users) use ($apiUrl, $accessToken, $syncer, &$stats) {
 
-            $result = $response->json();
-            $usersData = $result['data'] ?? [];
+                    // Ambil daftar email user
+                    $emailList = $users->pluck('email')->toArray();
 
-            if (empty($usersData)) {
-                return redirect()->back()->with('warning', 'Tidak ada data user yang diterima.');
-            }
+                    // Request Update  (POST)
+                    try {
+                        $response = Http::withoutVerifying()
+                            ->withToken($accessToken)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->timeout(30)
+                            ->post($apiUrl, [
+                                'emails' => $emailList
+                            ]);
 
-            // Proses Sync (Re-use Service)
-            $countSuccess = 0;
-            $countError   = 0;
+                        if ($response->successful()) {
+                            $apiResult = $response->json();
+                            $usersData = $apiResult['data'] ?? [];
 
-            foreach ($usersData as $userData) {
-                try {
-                    $syncer->handle($userData, null, true);
-                    $countSuccess++;
-                } catch (\Exception $e) {
-                    $countError++;
-                }
+                            // UPDATE DATA LOKAL
+                            foreach ($usersData as $userData) {
+                                try {
+                                    // Call user sync service
+                                    $result = $syncer->handle($userData, null, true);
+
+                                    // Cek status affected
+                                    $stats['processed']++;
+                                    if ($result['affected'] === true) {
+                                        $stats['updated']++;
+                                    } else {
+                                        $stats['uptodate']++;
+                                    }
+                                } catch (\Exception $e) {
+                                    // Log error per user
+                                    $stats['failed']++;
+                                    Log::error("[TSU_USER_SKIP] Gagal proses user: " . ($userData['email'] ?? 'Unknown'), [
+                                        'error_msg' => $e->getMessage(),
+                                        'file' => $e->getFile(),
+                                        'line' => $e->getLine()
+                                    ]);
+                                }
+                            }
+                        } else {
+                            // Log error request batch API
+                            $stats['failed'] += count($emailList);
+                            Log::error("[TSU_BATCH_API_ERR] Gagal Sync Batch: ", [
+                                'status_code' => $response->status(),
+                                'response_body' => $response->body(),
+                                'target_emails' => $emailList
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        // Log koneksi error request batch
+                        $stats['failed'] += count($emailList);
+                        Log::error("[TSU_BATCH_CONN_ERR] Koneksi Error Saat Sync Batch: ", [
+                            'error' => $e->getMessage(),
+                            'emails' => $emailList
+                        ]);
+                    }
+
+                    return true;
+                });
+
+            // Error Total
+            if ($stats['processed'] === 0 && $stats['failed'] > 0) {
+                throw new \Exception("[TSU_SYNC_ZERO] Sinkronisasi gagal total. Tidak ada data yang berhasil diambil.");
             }
 
             // LAPORAN
-            $modulName = ucfirst(config('app.module.name'));
-            $msg = "<b>Sinkronisasi Selesai!</b><br>";
-            $msg .= "$countSuccess User berhasil diproses.<br>";
-            if ($countError > 0) {
-                $msg .= "$countError User dilewati (User belum masuk ke $modulName).";
+            $msg = "<h6 class='font-weight-bold mb-2'>Laporan Sinkronisasi User</h6>";
+            $msg .= "<ul class='mb-0 pl-3' style='list-style-type: disc;'>";
+
+            // Total Diproses
+            $msg .= "<li>Total user diperiksa: <b>{$stats['processed']}</b></li>";
+
+            // Yang Berubah (Update)
+            if ($stats['updated'] > 0) {
+                $msg .= "<li>Data diperbarui: <b>{$stats['updated']}</b> user</li>";
             }
 
-            return redirect()->back()->with('success', $msg);
+            // Yang Sama (Up to date)
+            if ($stats['uptodate'] > 0) {
+                $msg .= "<li>Data up to date: {$stats['uptodate']} user</li>";
+            }
 
+            // Yang Gagal
+            if ($stats['failed'] > 0) {
+                $msg .= "<li class='text-danger font-weight-bold'>Gagal diproses: {$stats['failed']} user (Cek Log)</li>";
+            }
+
+            $msg .= "</ul>";
+
+            // Return sesuai kondisi
+            if ($stats['failed'] > 0 && $stats['processed'] === 0) {
+                return back()->with('error', 'Gagal melakukan sinkronisasi. Hubungi PIKDI untuk tindak lanjut!');
+            }
+
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Sync Error: ' . $e->getMessage());
+            // LOG ERROR (Global)
+            $rawMessage = $e->getMessage();
+            $errorCode  = "[TSU_SYS_CRITICAL]";
+            $userMsg    = "Terjadi kesalahan sistem yang tidak terduga.";
+
+            // Cek throw error message
+            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
+                $errorCode = $matches[0];
+                $userMsg = str_replace($errorCode, '', $rawMessage);
+            } else {
+                $userMsg = "Terjadi gangguan teknis internal.";
+            }
+
+            Log::error("$errorCode Gagal Sync User.", [
+                'original_error' => $rawMessage,
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            $finalErrorMsg = "<div class='text-center'>";
+            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
+            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
+            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
+            $finalErrorMsg .= "</div>";
+
+            return redirect()->back()->with('error', $finalErrorMsg);
         }
     }
 
