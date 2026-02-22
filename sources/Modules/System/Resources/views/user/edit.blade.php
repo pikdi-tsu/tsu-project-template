@@ -34,14 +34,17 @@
                                 @if($isSso)
                                     <span class="badge badge-pill badge-info px-3 py-1"><i class="fas fa-link mr-1"></i> SSO User</span>
                                 @else
-                                    <span class="badge badge-pill badge-secondary px-3 py-1"><i class="fas fa-user mr-1"></i> Local User</span>
+                                    <span class="badge badge-pill badge-secondary px-3 py-1"><i
+                                            class="fas fa-user mr-1"></i> Local User</span>
                                 @endif
 
                                 {{-- Status Aktif Badge --}}
                                 @if($user->isactive)
-                                    <span class="badge badge-pill badge-success px-3 py-1"><i class="fas fa-check mr-1"></i> Aktif</span>
+                                    <span class="badge badge-pill badge-success px-3 py-1"><i
+                                            class="fas fa-check mr-1"></i> Aktif</span>
                                 @else
-                                    <span class="badge badge-pill badge-danger px-3 py-1"><i class="fas fa-ban mr-1"></i> Non-Aktif</span>
+                                    <span class="badge badge-pill badge-danger px-3 py-1"><i
+                                            class="fas fa-ban mr-1"></i> Non-Aktif</span>
                                 @endif
                             </div>
                         </div>
@@ -51,13 +54,15 @@
                             <div class="list-group list-group-flush">
 
                                 {{-- Username --}}
-                                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                <div
+                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
                                     <div class="text-muted small"><i class="fas fa-id-badge mr-2"></i> Username</div>
                                     <div class="font-weight-bold text-dark">{{ $user->username }}</div>
                                 </div>
 
                                 {{-- Unit Kerja (Dummy/Placeholder) --}}
-                                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                <div
+                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
                                     <div class="text-muted small"><i class="fas fa-building mr-2"></i> Unit Kerja</div>
                                     <div class="text-right">
                                         @if($user->hasRole('dosen'))
@@ -71,8 +76,10 @@
                                 </div>
 
                                 {{-- Bergabung --}}
-                                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
-                                    <div class="text-muted small"><i class="fas fa-calendar-alt mr-2"></i> Bergabung</div>
+                                <div
+                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                    <div class="text-muted small"><i class="fas fa-calendar-alt mr-2"></i> Bergabung
+                                    </div>
                                     <span class="small text-dark">{{ $user->created_at->format('d M Y') }}</span>
                                 </div>
                             </div>
@@ -87,7 +94,8 @@
                             {{-- Input Role (Tetap Ada) --}}
                             <div class="form-group mb-3">
                                 <label class="small text-uppercase font-weight-bold text-muted">Role Aplikasi</label>
-                                <select name="roles[]" class="form-control select2" multiple="multiple" data-placeholder="Pilih Role...">
+                                <select name="roles[]" class="form-control select2" multiple="multiple"
+                                        data-placeholder="Pilih Role...">
                                     @foreach($roles as $role)
                                         <option value="{{ $role }}" {{ in_array($role, $userRole) ? 'selected' : '' }}>
                                             {{ $role }}
@@ -97,25 +105,26 @@
                             </div>
 
                             {{-- Switch Status Aktif --}}
-{{--                            @if(auth()->id() !== $user->id)--}}
-{{--                                <div class="form-group mb-0">--}}
-{{--                                    <div class="custom-control custom-switch">--}}
-{{--                                        <input type="checkbox" class="custom-control-input" id="isactive" name="isactive"--}}
-{{--                                            {{ $user->isactive ? 'checked' : '' }}>--}}
-{{--                                        <label class="custom-control-label small font-weight-bold text-dark" for="isactive">--}}
-{{--                                            Status Akun Aktif--}}
-{{--                                        </label>--}}
-{{--                                    </div>--}}
-{{--                                    <small class="text-muted pl-4">Matikan untuk memblokir login user ini.</small>--}}
-{{--                                </div>--}}
-{{--                            @endif--}}
+                            {{--                            @if(auth()->id() !== $user->id)--}}
+                            {{--                                <div class="form-group mb-0">--}}
+                            {{--                                    <div class="custom-control custom-switch">--}}
+                            {{--                                        <input type="checkbox" class="custom-control-input" id="isactive" name="isactive"--}}
+                            {{--                                            {{ $user->isactive ? 'checked' : '' }}>--}}
+                            {{--                                        <label class="custom-control-label small font-weight-bold text-dark" for="isactive">--}}
+                            {{--                                            Status Akun Aktif--}}
+                            {{--                                        </label>--}}
+                            {{--                                    </div>--}}
+                            {{--                                    <small class="text-muted pl-4">Matikan untuk memblokir login user ini.</small>--}}
+                            {{--                                </div>--}}
+                            {{--                            @endif--}}
                         </div>
                     </div>
 
                     {{-- Tombol Bantuan Kecil (Opsional) --}}
                     @if(!$isSso)
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-link btn-sm text-secondary" onclick="alert('Fitur ubah password manual user lokal bisa ditambahkan di sini nanti.')">
+                            <button type="button" class="btn btn-link btn-sm text-secondary"
+                                    onclick="alert('Fitur ubah password manual user lokal bisa ditambahkan di sini nanti.')">
                                 <i class="fas fa-key mr-1"></i> Ubah Password Manual?
                             </button>
                         </div>
@@ -149,7 +158,8 @@
 
                                 {{-- 2. LOOPING CONTENT TAB --}}
                                 @foreach($formConfig as $tabKey => $tabData)
-                                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel">
+                                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                                         id="{{ $tabKey }}" role="tabpanel">
                                         <div class="row">
 
                                             {{-- 3. LOOPING FIELDS --}}
@@ -158,7 +168,7 @@
                                                     // Logic Value
                                                     $dbValue = optional($profil)->{$field['name']};
 
-                                                    if(empty($dbValue) && in_array($field['name'], ['nim', 'nidn', 'nip'])) {
+                                                    if(empty($dbValue) && $field['name'] === 'nim') {
                                                         $dbValue = $user->username;
                                                     }
 
@@ -176,29 +186,39 @@
                                                 @endphp
 
                                                 <div class="col-md-{{ $field['col_size'] ?? 12 }} form-group mb-3">
-                                                    <label class="font-weight-bold small text-uppercase text-muted" for="{{ $field['name'] }}">
+                                                    <label class="font-weight-bold small text-uppercase text-muted"
+                                                           for="{{ $field['name'] }}">
                                                         {{ $field['label'] }}
                                                         {!! isset($field['required']) ? '<span class="text-danger">*</span>' : '' !!}
-                                                        @if($isReadonly) <i class="fas fa-lock ml-1 text-warning" title="Data Terkunci"></i> @endif
+                                                        @if($isReadonly)
+                                                            <i class="fas fa-lock ml-1 text-warning"
+                                                               title="Data Terkunci"></i>
+                                                        @endif
                                                     </label>
 
                                                     {{-- RENDER INPUT --}}
                                                     @if($field['type'] === 'textarea')
-                                                        <textarea name="{{ $field['name'] }}" id="{{ $field['name'] }}" class="form-control {{ $bgClass }}" rows="3" {{ $attrReadonly }}>{{ $val }}</textarea>
+                                                        <textarea name="{{ $field['name'] }}" id="{{ $field['name'] }}"
+                                                                  class="form-control {{ $bgClass }}"
+                                                                  rows="3" {{ $attrReadonly }}>{{ $val }}</textarea>
                                                     @elseif($field['type'] === 'select')
-                                                        <select name="{{ $field['name'] }}" id="{{ $field['name'] }}" class="form-control {{ $bgClass }}" {{ $attrDisabled }}>
+                                                        <select name="{{ $field['name'] }}" id="{{ $field['name'] }}"
+                                                                class="form-control {{ $bgClass }}" {{ $attrDisabled }}>
                                                             <option value="">- Pilih -</option>
                                                             @foreach($field['options'] as $optVal => $optLabel)
-                                                                <option value="{{ $optVal }}" {{ $val === $optVal ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                                                <option
+                                                                    value="{{ $optVal }}" {{ $val === $optVal ? 'selected' : '' }}>{{ $optLabel }}</option>
                                                             @endforeach
                                                         </select>
                                                         @if($isReadonly)
-                                                            <input type="hidden" name="{{ $field['name'] }}" id="{{ $field['name'] }}" value="{{ $val }}">
+                                                            <input type="hidden" name="{{ $field['name'] }}"
+                                                                   id="{{ $field['name'] }}" value="{{ $val }}">
                                                         @endif
                                                     @else
                                                         {{-- Input Text/Date/Number --}}
                                                         <input type="{{ $field['type'] }}" name="{{ $field['name'] }}"
-                                                               id="{{ $field['name'] }}" class="form-control {{ $bgClass }}" value="{{ $val }}"
+                                                               id="{{ $field['name'] }}"
+                                                               class="form-control {{ $bgClass }}" value="{{ $val }}"
                                                             {{ isset($field['required']) ? 'required' : '' }}
                                                             {{ $attrReadonly }}>
                                                     @endif
@@ -209,7 +229,8 @@
                                                     </div>
                                                     @enderror
                                                     @if($isReadonly)
-                                                        <small class="text-muted" style="font-size: 0.7em;">Data ini dikunci oleh sistem.</small>
+                                                        <small class="text-muted" style="font-size: 0.7em;">Data ini
+                                                            dikunci oleh sistem.</small>
                                                     @endif
                                                 </div>
                                             @endforeach
@@ -224,7 +245,8 @@
                                                     $keys = array_keys($formConfig);
                                                     $prevKey = $keys[$loop->index - 1];
                                                 @endphp
-                                                <button type="button" class="btn btn-secondary btn-prev" data-target="#{{ $prevKey }}">
+                                                <button type="button" class="btn btn-secondary btn-prev"
+                                                        data-target="#{{ $prevKey }}">
                                                     <i class="fas fa-arrow-left ml-1"></i> Kembali
                                                 </button>
                                             @else
@@ -238,7 +260,8 @@
                                                     $keys = array_keys($formConfig);
                                                     $nextKey = $keys[$loop->index + 1];
                                                 @endphp
-                                                <button type="button" class="btn btn-primary btn-next" data-target="#{{ $nextKey }}">
+                                                <button type="button" class="btn btn-primary btn-next"
+                                                        data-target="#{{ $nextKey }}">
                                                     Lanjut <i class="fas fa-arrow-right ml-1"></i>
                                                 </button>
                                             @else
@@ -264,12 +287,12 @@
 
 @section('script')
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Init Select2
-            $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
+            $('.select2').select2({theme: 'bootstrap4', width: '100%'});
 
             // Logic Tombol Next/Prev
-            $('.btn-next, .btn-prev').click(function() {
+            $('.btn-next, .btn-prev').click(function () {
                 var targetPanelId = $(this).data('target');
 
                 // Pindah Tab
