@@ -16,7 +16,7 @@
                       TIGA SERANGKAI UNIVERSITY
                     </p>
                     <h2 class="text-uppercase mt-4 mb-5">
-                      PROJECT TEMPLATE
+                        {{ $project_name }}
                     </h2>
                     <div>
                       <a href="{{route('login')}}" class="primary-btn2 ml-sm-3 ml-0">Login</a>
