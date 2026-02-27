@@ -119,7 +119,8 @@ class SettingController extends Controller
             'menu'  => 'Change Profile',
         );
         // dd(session('session')['user_nik']);
-        return view('system::setting/editprofile', $data);
+//        return view('system::setting/editprofile', $data);
+        return route('profile', $data);
     }
 
     public function saveEditProfile(Request $post)

@@ -10,16 +10,16 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Welcome to SIAKAD</h1>
-                </div><!-- /.col -->
+                    <h1>{{ $title ?? 'Halaman Dashboard' }}</h1>
+                </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item active"><a href="{{route('dashboard')}}">Dashboard</a></li>
                         {{-- <li class="breadcrumb-item active">Starter Page</li> --}}
                     </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+                </div>
+            </div>
+        </div>
     </div>
     <!-- /.content-header -->
 
@@ -27,30 +27,21 @@
     <div class="content">
         <div class="container-fluid">
             <div class="row">
-                <!-- /.col-md-6 -->
                 <div class="col-md-12">
-                    @for($i = 0; $i < 10; $i++)
-                        <div class="card card-primary card-outline">
-                            <div class="card-header">
-                                <h5 class="m-0">Featured</h5>
-                            </div>
-                            <div class="card-body">
-                                <h6 class="card-title">Special title treatment</h6>
-f
-                                <p class="card-text">With supporting text below as a natural lead-in to additional content.
-                                    {{rupiah(50000)}}
-                                </p>
-                                <a href="#" class="btn btn-primary" id="testing-btn">Go somewhere</a>
-                            </div>
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h5 class="m-0">Card Content Template</h5>
                         </div>
-                    @endfor
+                        <div class="card-body">
+                            <h6 class="card-title">Title</h6>
+                            <p class="card-text">Content</p>
+                            <a href="#" class="btn btn-primary" id="testing-btn">Button</a>
+                        </div>
+                    </div>
                 </div>
-                <!-- /.col-md-6 -->
             </div>
-            <!-- /.row -->
-        </div><!-- /.container-fluid -->
+        </div>
     </div>
-    <!-- /.content -->
 @endsection
 @section('script')
     <script>

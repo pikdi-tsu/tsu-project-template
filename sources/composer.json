@@ -15,6 +15,7 @@
         "laravel/ui": "^4.2",
         "nwidart/laravel-modules": "^10.0",
         "spatie/laravel-ignition": "^2.0",
+        "spatie/laravel-permission": "^6.24",
         "yajra/laravel-datatables-oracle": "^11.1"
     },
     "require-dev": {
@@ -43,7 +44,7 @@
             "Modules\\": "Modules/"
         },
         "classmap": [
-            "database/seeds",
+            "database/seeders",
             "database/factories"
         ]
     },

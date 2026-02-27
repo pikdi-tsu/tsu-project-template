@@ -2,7 +2,10 @@
 
 namespace Modules\System\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\System\View\Components\Layouts\Sidebar;
+
 // use Illuminate\Database\Eloquent\Factory;
 
 class SystemServiceProvider extends ServiceProvider
@@ -33,7 +36,9 @@ class SystemServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         // $this->registerFactories();
-        $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        Blade::component('layouts.sidebar', Sidebar::class);
+        Blade::component('system::components.sidebar-item', 'sidebar-item');
     }
 
     /**

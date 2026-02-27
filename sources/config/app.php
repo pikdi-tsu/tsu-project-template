@@ -15,6 +15,58 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'module' => [
+        'full_name' => env('MODULE_FULL_NAME', 'tsu_template'),
+        'name' => env('MODULE_NAME', 'template'),
+    ],
+
+    // Main Apps
+    'tsu_homebase' => [
+      'url' => env('HOMEBASE_URL'),
+    ],
+
+    // Urutan menentukan prioritas pengecekan.
+    'active_guards' => ['web'],
+
+    // Allowed Roles
+    'roles' => [
+        'allowed' => env('APP_ALLOWED_ROLES')
+            ? explode(',', env('APP_ALLOWED_ROLES'))
+            : [],
+    ],
+
+    // Oauth Authorization Grant
+    'oauth' =>[
+        'authorization' => [
+            'id' => env('TSU_SSO_CLIENT_ID'),
+            'secret' => env('TSU_SSO_CLIENT_SECRET'),
+            'redirect' => env('TSU_SSO_REDIRECT_URI')
+        ],
+        'client' => [
+            'id' => env('HOMEBASE_CLIENT_ID'),
+            'secret' => env('HOMEBASE_CLIENT_SECRET'),
+        ],
+    ],
+
+    // PIKDI Settings
+    'pikdi' => [
+        'name' => env('PIKDI_ADMIN_NAME', 'PIKDI TSU'),
+        'username' => env('PIKDI_ADMIN_USERNAME', 'pikditsu'),
+        'email' => env('PIKDI_ADMIN_EMAIL', 'pikdi@tsu.ac.id'),
+        'password' => env('MODULE_FULL_NAME', 'tsu_template'),
+        'key' => [
+            'emergency' => env('PIKDI_EMERGENCY_SECRET', 'pikdiemergency@TSU25'),
+            'rescue' => env('PIKDI_RESCUE_SECRET')
+        ],
+    ],
+
+    // GMAPS Settings
+    'gmaps' => [
+        'api' => [
+            'key' => env('GMAPS_KEY'),
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
