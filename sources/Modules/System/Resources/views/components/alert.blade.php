@@ -48,9 +48,20 @@
                 errorText  = 'Waktu sesi login Anda habis. Silakan login ulang untuk melanjutkan.';
                 isSessionExpired = true;
             }
-            // ERROR SERVER (500, dll)
-            else if(xhr && xhr.responseJSON && xhr.responseJSON.message) {
-                errorText = xhr.responseJSON.message;
+            // AKSES DITOLAK ATAU VALIDASI (403 / 422)
+            else if (statusCode === 403 || statusCode === 422) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+                    errorText = xhr.responseJSON.message;
+                }
+            }
+            // ERROR SERVER INTERNAL (500)
+            else if (statusCode >= 500) {
+                errorTitle = 'Gangguan Server';
+                errorText  = 'Terjadi kendala pada server kami. Tim teknis telah diinformasikan untuk penanganan lebih lanjut.';
+            }
+            else {
+                errorTitle = 'Gangguan Sistem';
+                errorText  = 'Terjadi kendala saat mengambil data tabel. Silakan hubungi tim teknis jika masalah ini terus berulang.';
             }
 
             // SweetAlert
@@ -104,6 +115,24 @@
     }
 
     $(document).ready(function() {
+        // 403 alert
+        $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+            // Cek error 403 (Unauthorized / Permission)
+            if (jqxhr.status === 403) {
+                let response = jqxhr.responseJSON;
+                let msg = response ? response.message : 'Anda tidak memiliki akses untuk aksi ini.';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Akses Ditolak!',
+                    html: msg,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Tutup',
+                    backdrop: `rgba(0,0,0,0.4) left top no-repeat`
+                });
+            }
+        });
+
         // Sukses Setup
         @if(session('success'))
         Toast.fire({
