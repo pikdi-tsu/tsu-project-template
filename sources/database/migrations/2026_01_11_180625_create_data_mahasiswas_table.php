@@ -71,23 +71,23 @@ return new class extends Migration
             $table->timestamps();
 
             // --- DEFINISI FOREIGN KEY ---
-            $table->foreign('id_prodi')
-                ->references('id')->on('pmb_master_jurusankuliah')
-                ->onDelete('restrict');
-            $table->foreign('id_jenjang')
-                ->references('id')->on('pmb_master_jenjang')
-                ->onDelete('restrict');
-
-            if (Schema::hasTable('pmb_master_provinsi')) {
-                $table->foreign('id_provinsi')
-                    ->references('idprov')->on('pmb_master_provinsi')
-                    ->onDelete('set null');
-            }
-            if (Schema::hasTable('pmb_master_kabupaten')) {
-                $table->foreign('id_kabupaten')
-                    ->references('id')->on('pmb_master_kabupaten')
-                    ->onDelete('set null');
-            }
+//            $table->foreign('id_prodi')
+//                ->references('id')->on('pmb_master_jurusankuliah')
+//                ->onDelete('restrict');
+//            $table->foreign('id_jenjang')
+//                ->references('id')->on('pmb_master_jenjang')
+//                ->onDelete('restrict');
+//
+//            if (Schema::hasTable('pmb_master_provinsi')) {
+//                $table->foreign('id_provinsi')
+//                    ->references('idprov')->on('pmb_master_provinsi')
+//                    ->onDelete('set null');
+//            }
+//            if (Schema::hasTable('pmb_master_kabupaten')) {
+//                $table->foreign('id_kabupaten')
+//                    ->references('id')->on('pmb_master_kabupaten')
+//                    ->onDelete('set null');
+//            }
         });
     }
 
