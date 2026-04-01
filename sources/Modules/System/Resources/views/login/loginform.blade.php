@@ -17,7 +17,7 @@
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
                 <a href="javascript:void(0)" id="secret-trigger" class="h1 text-dark" style="text-decoration: none;">
-                    <b>TSU</b> {{ ucfirst(config('app.module.name')) }}
+                    <b>TSU</b> <br> {{ ucwords(str_replace('_', ' ', config('app.module.name'))) }}
                 </a>
             </div>
             <div class="card-body">
