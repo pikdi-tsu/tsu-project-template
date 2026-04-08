@@ -40,9 +40,9 @@ class PermissionSeeder extends Seeder
         ];
 
         $adminPermissions = [
-            'system:user:view',         // View user
-            'system:user:edit',         // Edit user
-            'system:user:delete',       // Delete user
+            'users:user:view',         // View user
+            'users:user:edit',         // Edit user
+            'users:user:delete',       // Delete user
             'system:role:view',         // View role
             'system:role:edit',         // Edit role
             'system:permission:view',   // View permission

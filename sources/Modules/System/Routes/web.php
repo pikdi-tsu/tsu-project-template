@@ -40,7 +40,7 @@ Route::prefix('')->group(function() {
         // System Navigation
         Route::prefix('system')->middleware(['auth'])->name('system.')->group(function() {
             // User
-//            Route::middleware(['permission:system:user:view'])->group(function() {
+//            Route::middleware(['permission:users:user:view'])->group(function() {
 //                Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
 //                Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
 //                Route::resource('user', UserController::class);
