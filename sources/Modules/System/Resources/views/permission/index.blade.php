@@ -37,7 +37,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="name">Nama Permission <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="input-name" class="form-control" placeholder="contoh: siakad:krs:approve" required>
+                            <input type="text" name="name" id="input-name" class="form-control" placeholder="contoh: siakad:krs:approve" autocomplete="off" required>
                             <small class="text-muted">
                                 Format saran: <code>modul:fitur:aksi</code> atau <code>aplikasi:fitur:aksi</code><br>
                             </small>
