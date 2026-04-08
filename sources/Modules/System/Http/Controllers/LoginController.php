@@ -45,7 +45,7 @@ class LoginController extends Controller
     public function index()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard')
+            return redirect()->route('admin.dashboard.index')
                 ->with('alert', ['title' => 'Info', 'message' => 'Anda sudah login.', 'status' => 'info']);
         }
 
@@ -141,7 +141,7 @@ class LoginController extends Controller
             session()->forget('manual_block_until');
             $this->clearLoginAttempts($request);
 
-            return redirect()->route('dashboard')
+            return redirect()->route('admin.dashboard.index')
                 ->with('success', 'Login Berhasil!');
         }
 

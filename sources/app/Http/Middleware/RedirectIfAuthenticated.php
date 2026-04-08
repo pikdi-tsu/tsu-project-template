@@ -17,7 +17,7 @@ class RedirectIfAuthenticated
     public function handle(\Illuminate\Http\Request $request, Closure $next, string $guard = null): mixed
     {
         if (Auth::guard($guard)->check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('admin.dashboard.index');
         }
 
         return $next($request);

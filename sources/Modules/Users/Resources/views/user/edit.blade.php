@@ -1,4 +1,4 @@
-@extends('system::template/admin/header')
+@extends('system::System.Resources.views.template.admin.header')
 @section('title', $title)
 
 @section('content')
@@ -35,16 +35,16 @@
                                     <span class="badge badge-pill badge-info px-3 py-1"><i class="fas fa-link mr-1"></i> SSO User</span>
                                 @else
                                     <span class="badge badge-pill badge-secondary px-3 py-1"><i
-                                            class="fas fa-user mr-1"></i> Local User</span>
+                                                class="fas fa-user mr-1"></i> Local User</span>
                                 @endif
 
                                 {{-- Status Aktif Badge --}}
                                 @if($user->isactive)
                                     <span class="badge badge-pill badge-success px-3 py-1"><i
-                                            class="fas fa-check mr-1"></i> Aktif</span>
+                                                class="fas fa-check mr-1"></i> Aktif</span>
                                 @else
                                     <span class="badge badge-pill badge-danger px-3 py-1"><i
-                                            class="fas fa-ban mr-1"></i> Non-Aktif</span>
+                                                class="fas fa-ban mr-1"></i> Non-Aktif</span>
                                 @endif
                             </div>
                         </div>
@@ -55,14 +55,14 @@
 
                                 {{-- Username --}}
                                 <div
-                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                        class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
                                     <div class="text-muted small"><i class="fas fa-id-badge mr-2"></i> Username</div>
                                     <div class="font-weight-bold text-dark">{{ $user->username }}</div>
                                 </div>
 
                                 {{-- Unit Kerja (Dummy/Placeholder) --}}
                                 <div
-                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                        class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
                                     <div class="text-muted small"><i class="fas fa-building mr-2"></i> Unit Kerja</div>
                                     <div class="text-right">
                                         @if($user->hasRole('dosen'))
@@ -77,7 +77,7 @@
 
                                 {{-- Bergabung --}}
                                 <div
-                                    class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                        class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
                                     <div class="text-muted small"><i class="fas fa-calendar-alt mr-2"></i> Bergabung
                                     </div>
                                     <span class="small text-dark">{{ $user->created_at->format('d M Y') }}</span>
@@ -207,7 +207,7 @@
                                                             <option value="">- Pilih -</option>
                                                             @foreach($field['options'] as $optVal => $optLabel)
                                                                 <option
-                                                                    value="{{ $optVal }}" {{ $val === $optVal ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                                                        value="{{ $optVal }}" {{ $val === $optVal ? 'selected' : '' }}>{{ $optLabel }}</option>
                                                             @endforeach
                                                         </select>
                                                         @if($isReadonly)
@@ -219,8 +219,8 @@
                                                         <input type="{{ $field['type'] }}" name="{{ $field['name'] }}"
                                                                id="{{ $field['name'] }}"
                                                                class="form-control {{ $bgClass }}" value="{{ $val }}"
-                                                            {{ isset($field['required']) ? 'required' : '' }}
-                                                            {{ $attrReadonly }}>
+                                                                {{ isset($field['required']) ? 'required' : '' }}
+                                                                {{ $attrReadonly }}>
                                                     @endif
                                                     {{-- Pesan Error Validasi --}}
                                                     @error($field['name'])

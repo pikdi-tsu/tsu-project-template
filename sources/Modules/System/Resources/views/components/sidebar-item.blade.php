@@ -16,6 +16,13 @@
 
     $hasChildren = $visibleChildren->isNotEmpty();
 
+    // Logic Parent kosong (Route '#' atau kosong)
+    $isFolder = empty($menu->route) || $menu->route === '#';
+
+    if ($isFolder && !$hasChildren) {
+        return;
+    }
+
     // Cek Status Aktif
     $isActive = $menu->isActive();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\System\Http\Controllers;
+namespace Modules\Users\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
 use App\Models\DataDosenTendik;
@@ -9,26 +9,23 @@ use App\Models\User;
 use App\Services\UserSyncService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends MiddlewareController
 {
     public function __construct()
     {
-        $this->registerPermissions('system:user');
+        $this->registerPermissions('users:user');
     }
 
     // Halaman Utama
     public function index()
     {
-        return view('system::user.index', [
+        return view('users::user.index', [
             'title' => 'Monitoring Pengguna Siakad'
         ]);
     }
@@ -65,7 +62,7 @@ class UserController extends MiddlewareController
                     return '<span class="badge badge-success">Sedang Online</span>';
                 }
 
-                return $this->getActionButtons($row, 'system:user', [
+                return $this->getActionButtons($row, 'users:user', [
                     'edit_url'   => route('system.user.edit', $row->id),
                     'use_modal'  => false,
                     'delete_url' => route('system.user.destroy', $row->id)
@@ -77,7 +74,7 @@ class UserController extends MiddlewareController
 
     public function sync(UserSyncService $syncer)
     {
-        $this->guard('create', 'system:user');
+        $this->guard('create', 'users:user');
 
         $homebaseUrl  = config('app.tsu_homebase.url');
         $clientId     = config('app.oauth.client.id');
@@ -254,7 +251,7 @@ class UserController extends MiddlewareController
 
     public function edit($id)
     {
-        $this->guard('edit', 'system:user');
+        $this->guard('edit', 'users:user');
 
         $title = 'Edit User';
         $user = User::with(['roles', 'dosenTendik', 'mahasiswa'])->findOrFail($id);
@@ -272,7 +269,7 @@ class UserController extends MiddlewareController
             $formConfig = DataDosenTendik::getFormConfig();
         }
 
-        return view('system::user.edit', compact('title', 'user', 'roles', 'userRole', 'isSso', 'formConfig'));
+        return view('users::user.edit', compact('title', 'user', 'roles', 'userRole', 'isSso', 'formConfig'));
     }
 
     public function update(Request $request, $id)
@@ -407,7 +404,7 @@ class UserController extends MiddlewareController
     // Hapus User
     public function destroy($id)
     {
-        $this->guard('delete', 'system:user');
+        $this->guard('delete', 'users:user');
 
         $user = User::query()->findOrFail($id);
 

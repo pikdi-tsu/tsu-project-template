@@ -106,7 +106,7 @@ class EmergencyLoginController extends Controller
                 );
             }
 
-            return redirect()->route('dashboard')
+            return redirect()->route('admin.dashboard')
                 ->with('alert', ['title' => 'Success', 'message' => 'Login Berhasil!', 'status' => 'success']);
         } catch (\Exception $e) {
             return response()->view('system::errors.index', [
@@ -226,7 +226,7 @@ class EmergencyLoginController extends Controller
         Auth::login($user);
         $user->update(['last_login_at' => now()]);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('admin.dashboard')
             ->with('alert', [
                 'title' => 'Rescue Success',
                 'message' => "Login Darurat Berhasil via <b>$methodName</b> sebagai: <b>{$user->name}</b>",
