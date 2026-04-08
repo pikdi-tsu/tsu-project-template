@@ -1,17 +1,15 @@
 <?php
 
 use App\Http\Controllers\EmergencyLoginController;
+use App\Http\Controllers\SsoController;
 use Illuminate\Support\Facades\Route;
-use Modules\System\Http\Controllers\DashboardController;
 use Modules\System\Http\Controllers\HomeController;
 use Modules\System\Http\Controllers\LoginController;
+use Modules\System\Http\Controllers\MenuController;
 use Modules\System\Http\Controllers\PermissionController;
 use Modules\System\Http\Controllers\RoleController;
-use Modules\System\Http\Controllers\SettingController;
-use App\Http\Controllers\SsoController;
-use Modules\System\Http\Controllers\MenuController;
-use Modules\System\Http\Controllers\UserController;
-use Modules\System\Http\Controllers\UserProfileController;
+use Modules\Users\Http\Controllers\UserController;
+use Modules\Users\Http\Controllers\UserProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +27,7 @@ Route::prefix('')->group(function() {
     Route::get('/', [HomeController::class, 'index'])->name('indexing')->middleware('web', 'guest');
 
     Route::middleware(['web'])->group(function () {
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+//        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('login', [LoginController::class, 'index'])->name('login')->middleware('guest');
         Route::post('login', [LoginController::class, 'login'])->name('login.action');
         Route::get('login/sso', [SsoController::class, 'redirect'])->name('sso.login');
