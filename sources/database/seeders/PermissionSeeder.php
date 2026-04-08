@@ -18,10 +18,10 @@ class PermissionSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $systemPermissions = [
-            'system:user:view',         // View user
-            'system:user:create',       // Create user
-            'system:user:edit',         // Edit user
-            'system:user:delete',       // Delete user
+            'users:user:view',         // View user
+            'users:user:create',       // Create user
+            'users:user:edit',         // Edit user
+            'users:user:delete',       // Delete user
 
             'system:role:view',         // View role
             'system:role:create',       // Create role
