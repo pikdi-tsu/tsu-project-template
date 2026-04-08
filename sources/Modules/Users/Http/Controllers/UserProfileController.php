@@ -43,7 +43,7 @@ class UserProfileController extends Controller
             'icon'     => ($user->isactive ?? true) ? 'fa-check-circle' : 'fa-ban',
         ];
 
-        return view('system::profile.index', compact(
+        return view('users::profile.index', compact(
             'user',
             'title',
             'hasPhoto',

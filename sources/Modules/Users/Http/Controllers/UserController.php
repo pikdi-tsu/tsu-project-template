@@ -63,9 +63,9 @@ class UserController extends MiddlewareController
                 }
 
                 return $this->getActionButtons($row, 'users:user', [
-                    'edit_url'   => route('system.user.edit', $row->id),
+                    'edit_url'   => route('users.user.edit', $row->id),
                     'use_modal'  => false,
-                    'delete_url' => route('system.user.destroy', $row->id)
+                    'delete_url' => route('users.user.destroy', $row->id)
                 ]);
             })
             ->rawColumns(['avatar', 'roles', 'action'])
