@@ -13,7 +13,7 @@ class MiddlewareController extends BaseController
 
     /**
      * Fungsi Middleware permission di controller
-     * @param string $prefix (Contoh: 'system:user', 'siakad:krs')
+     * @param string $prefix (Contoh: 'users:user', 'siakad:krs')
      */
     protected function registerPermissions(string $prefix): void
     {

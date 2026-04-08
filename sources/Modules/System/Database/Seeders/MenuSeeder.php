@@ -33,10 +33,10 @@ class MenuSeeder extends Seeder
         // Submenu: Users
         MenuSidebar::query()->create([
             'name' => 'Users',
-            'route' => 'system.user.index',
+            'route' => 'users.user.index',
             'parent_id' => $system->id,
             'order' => 0,
-            'permission_name' => 'system:user:view',
+            'permission_name' => 'users:user:view',
             'icon' => 'fas fa-users',
         ]);
 

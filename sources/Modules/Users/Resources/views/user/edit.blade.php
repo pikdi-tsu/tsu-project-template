@@ -6,12 +6,12 @@
 
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Edit Pengguna</h1>
-            <a href="{{ route('system.user.index') }}" class="btn btn-secondary btn-sm shadow-sm">
+            <a href="{{ route('users.user.index') }}" class="btn btn-secondary btn-sm shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali
             </a>
         </div>
 
-        <form action="{{ route('system.user.update', $user->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('users.user.update', $user->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
