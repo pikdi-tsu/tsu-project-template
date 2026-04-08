@@ -40,11 +40,11 @@ Route::prefix('')->group(function() {
         // System Navigation
         Route::prefix('system')->middleware(['auth'])->name('system.')->group(function() {
             // User
-            Route::middleware(['permission:system:user:view'])->group(function() {
-                Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
-                Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
-                Route::resource('user', UserController::class);
-            });
+//            Route::middleware(['permission:users:user:view'])->group(function() {
+//                Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
+//                Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
+//                Route::resource('user', UserController::class);
+//            });
 
             // Role
             Route::middleware(['permission:system:role:view'])->group(function() {
@@ -67,11 +67,11 @@ Route::prefix('')->group(function() {
         });
 
         // Profile & Password
-        Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
-            Route::get('/', [UserProfileController::class, 'index'])->name('index');
-            Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
-            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
-        });
+//        Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
+//            Route::get('/', [UserProfileController::class, 'index'])->name('index');
+//            Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
+//            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
+//        });
 
 //        //Setting
 //        Route::prefix('setting')->middleware(['auth'])->name('setting.')->group(function(){
