@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Users\Http\Controllers\MahasiswaController;
 use Modules\Users\Http\Controllers\PegawaiController;
 use Modules\Users\Http\Controllers\UserController;
+use Modules\Users\Http\Controllers\UserProfileController;
 
 /*
 |--------------------------------------------------------------------------
