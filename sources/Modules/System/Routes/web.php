@@ -67,11 +67,11 @@ Route::prefix('')->group(function() {
         });
 
         // Profile & Password
-        Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
-            Route::get('/', [UserProfileController::class, 'index'])->name('index');
-            Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
-            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
-        });
+//        Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
+//            Route::get('/', [UserProfileController::class, 'index'])->name('index');
+//            Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
+//            Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
+//        });
 
 //        //Setting
 //        Route::prefix('setting')->middleware(['auth'])->name('setting.')->group(function(){

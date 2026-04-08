@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Users\Http\Controllers\MahasiswaController;
 use Modules\Users\Http\Controllers\PegawaiController;
 use Modules\Users\Http\Controllers\UserController;
+use Modules\Users\Http\Controllers\UserProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,9 +18,18 @@ use Modules\Users\Http\Controllers\UserController;
 */
 
 Route::prefix('users')->name('users.')->middleware(['auth'])->group(function () {
-    Route::middleware(['permission:system:user:view'])->group(function() {
+    // User
+    Route::middleware(['permission:users:user:view'])->group(function() {
         Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
         Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
         Route::resource('user', UserController::class);
     });
+
+});
+
+// Profile & Password
+Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
+    Route::get('/', [UserProfileController::class, 'index'])->name('index');
+    Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
+    Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
 });
