@@ -1,14 +1,11 @@
 <?php
 
-namespace Modules\System\Http\Controllers;
+namespace Modules\Users\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class UserProfileController extends Controller

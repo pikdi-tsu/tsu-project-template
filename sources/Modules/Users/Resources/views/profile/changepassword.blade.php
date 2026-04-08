@@ -13,7 +13,7 @@
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
                         <li class="breadcrumb-item active">{{$menu}}</li>
                     </ol>
                 </div><!-- /.col -->
@@ -69,7 +69,7 @@
                             </form>
                         </div>
                         <div class="card-footer text-right">
-                            <a href="{{ route('dashboard') }}" class="btn btn-primary btn-sm mr-2"
+                            <a href="{{ route('admin.dashboard') }}" class="btn btn-primary btn-sm mr-2"
                                id="testing-btn">Kembali</a>
                             <button type="button" class="btn btn-success btn-sm" id="btn-submit">Simpan</button>
                         </div>

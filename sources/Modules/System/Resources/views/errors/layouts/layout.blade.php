@@ -34,7 +34,7 @@
 
 <div class="min-h-screen flex flex-col items-center justify-center text-center px-4">
     <div class="mb-6">
-        <a href="{{ route('dashboard') }}" class="flex justify-center transform hover:scale-105 transition-transform duration-300">
+        <a href="{{ route('admin.dashboard') }}" class="flex justify-center transform hover:scale-105 transition-transform duration-300">
             <img src="{{ asset('public/assetsku/img/logotsu.png') }}" alt="Ikon Tiga Serangkai University" width="60px" />
         </a>
     </div>

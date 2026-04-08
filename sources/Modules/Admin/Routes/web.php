@@ -11,6 +11,11 @@
 |
 */
 
-Route::prefix('admin')->group(function() {
-    Route::get('/', 'AdminController@index');
+use Modules\Admin\Http\Controllers\DashboardController;
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+
+    // URL: tsu-app.test/admin/dashboard
+    // Name: route('admin.dashboard.index')
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
