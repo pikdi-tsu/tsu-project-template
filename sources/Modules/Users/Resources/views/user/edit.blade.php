@@ -1,4 +1,4 @@
-@extends('system::System.Resources.views.template.admin.header')
+@extends('system::template.admin.header')
 @section('title', $title)
 
 @section('content')
