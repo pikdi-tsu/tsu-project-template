@@ -36,6 +36,6 @@ return new class extends Migration
     {
         $tableName = config('app.table.menu_sidebars');
 
-        Schema::dropIfExists('system_menu_sidebars');
+        Schema::dropIfExists($tableName);
     }
 };
