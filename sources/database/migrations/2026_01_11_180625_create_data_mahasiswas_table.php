@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableUsers = config('auth.providers.users.table', 'users');
-        $tableName = config('app.module.name', 'siakad');
+        $tableUsers = config('auth.providers.users.table') ? config('auth.providers.users.table') . '_users' : 'users';
+        $tableName = config('app.table.data_mahasiswas');
 
-        Schema::create($tableName . '_data_mahasiswas', static function (Blueprint $table) use ($tableUsers) {
+        Schema::create($tableName, static function (Blueprint $table) use ($tableUsers) {
             $table->uuid('id')->primary();
             // RELASI KE AUTH (SSO)
             $table->foreignUuid('user_id')->nullable()->constrained($tableUsers)->onDelete('cascade');
@@ -95,6 +95,8 @@ return new class extends Migration
      * Reverse the migrations.
      */
     public function down(): void {
-        Schema::dropIfExists(config('app.module.name', 'siakad') . '_data_mahasiswas');
+        $tableName = config('app.table.data_mahasiswas');
+
+        Schema::dropIfExists($tableName);
     }
 };
