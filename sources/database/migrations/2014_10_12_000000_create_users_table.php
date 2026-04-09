@@ -52,6 +52,8 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(config('auth.providers.users.table') ? config('auth.providers.users.table') . '_users' : 'users');
+        $tableName = config('app.table.users');
+
+        Schema::dropIfExists($tableName);
     }
 }
