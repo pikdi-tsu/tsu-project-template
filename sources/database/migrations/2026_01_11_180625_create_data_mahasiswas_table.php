@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableUsers = config('auth.providers.users.table') ? config('auth.providers.users.table') . '_users' : 'users';
+        $tableUsers = config('app.table.users');
         $tableName = config('app.table.data_mahasiswas');
 
         Schema::create($tableName, static function (Blueprint $table) use ($tableUsers) {

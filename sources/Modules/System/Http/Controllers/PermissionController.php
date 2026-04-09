@@ -48,7 +48,7 @@ class PermissionController extends MiddlewareController
         $this->guardStore($request->id, 'system:permission');
 
         $request->validate([
-            'name' => ['required', Rule::unique(config('app.table.permission'), 'name')->where('guard_name', 'web')]
+            'name' => ['required', Rule::unique(config('app.table.permissions'), 'name')->where('guard_name', 'web')]
         ]);
 
         Permission::create(['name' => $request->name, 'guard_name' => 'web']);
@@ -82,7 +82,7 @@ class PermissionController extends MiddlewareController
         $permission = Permission::query()->findOrFail($id);
 
         $request->validate([
-            'name' => ['required', Rule::unique(config('app.table.permission'), 'name')->ignore($id)->where('guard_name', 'web')]
+            'name' => ['required', Rule::unique(config('app.table.permissions'), 'name')->ignore($id)->where('guard_name', 'web')]
         ]);
 
         $permission->update(['name' => $request->name]);
