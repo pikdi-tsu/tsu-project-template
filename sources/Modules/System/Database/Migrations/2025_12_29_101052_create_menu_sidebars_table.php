@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableName = config('app.module.name', 'template');
+        $tableName = config('app.table.menu_sidebars');
 
-        Schema::create($tableName . '_menu_sidebars', static function (Blueprint $table) use ($tableName) {
+        Schema::create($tableName, static function (Blueprint $table) use ($tableName) {
             $table->id();
             $table->string('name');
             $table->string('icon')->nullable();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('isactive')->default(true);
             $table->timestamps();
 
-            $table->foreign('parent_id')->references('id')->on($tableName . '_menu_sidebars')->onDelete('cascade');
+            $table->foreign('parent_id')->references('id')->on($tableName)->onDelete('cascade');
         });
     }
 
@@ -34,6 +34,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        $tableName = config('app.table.menu_sidebars');
+
         Schema::dropIfExists('system_menu_sidebars');
     }
 };

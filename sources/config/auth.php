@@ -79,7 +79,7 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => \App\Models\User::class,
-            'table' => env('AUTH_TABLE_NAME', 'users'),
+            'table' => env('TABLE_NAME'),
         ],
 
 //        'mahasiswas' => [

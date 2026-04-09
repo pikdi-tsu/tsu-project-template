@@ -52,7 +52,7 @@ class User extends Authenticatable
 
     public function getTable()
     {
-        return config('auth.providers.users.table');
+        return config('app.table.users');
     }
 
     // Relasi ke Profil Mahasiswa
