@@ -23,7 +23,7 @@ class DataDosenTendik extends Authenticatable
 
     public function getTable()
     {
-        return config('app.module.name') . '_data_dosen_tendiks';
+        return config('app.table.data_dosen_tendiks');
     }
 
     public function user()

@@ -290,11 +290,9 @@ class RoleController extends MiddlewareController
     {
         $this->guard('create', 'system:role');
 
-        $roleTable = config('auth.providers.users.table') . '_roles';
-
         // Validasi
         $request->validate([
-            'name'        => 'required|string|max:50|unique:'.$roleTable.',name',
+            'name'        => 'required|string|max:50|unique:'.config('app.table.roles').',name',
             'permissions' => 'array'
         ]);
 
@@ -382,10 +380,9 @@ class RoleController extends MiddlewareController
 
         // Validasi
         $rules = ['permissions' => 'array'];
-        $roleTable = config('auth.providers.users.table') . '_roles';
 
         if (!$isLocked) {
-            $rules['name'] = 'required|string|max:50|unique:'.$roleTable.',name,' . $id;
+            $rules['name'] = 'required|string|max:50|unique:'.config('app.table.roles').',name,' . $id;
         }
 
         $request->validate($rules);

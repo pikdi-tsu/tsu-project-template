@@ -21,7 +21,7 @@ class MenuSidebar extends Model
 
     public function getTable()
     {
-        return config('app.module.name') . '_menu_sidebars';
+        return config('app.table.menu_sidebars');
     }
 
     // Relasi ke Submenu

@@ -60,6 +60,22 @@ return [
         ],
     ],
 
+    // Custom Table Name
+    $tableName = env('TABLE_NAME'),
+
+    'table' => [
+        'name' => $tableName,
+        'users' => $tableName ? $tableName . '_users' : 'users',
+        'data_mahasiswas' => $tableName ? $tableName . '_data_mahasiswas' : 'data_mahasiswas',
+        'data_dosen_tendiks' => $tableName ? $tableName . '_data_dosen_tendiks' : 'data_dosen_tendiks',
+        'menu_sidebars' => $tableName ? $tableName . '_menu_sidebars' : 'menu_sidebars',
+        'roles' => $tableName ? $tableName . '_roles' : 'roles',
+        'permissions' =>   $tableName ? $tableName . '_permissions' : 'permissions',
+        'model_has_permissions' => $tableName ? $tableName . '_has_permissions' : 'model_has_permissions',
+        'model_has_roles' => $tableName ? $tableName . '_has_roles' : 'model_has_roles',
+        'role_has_permissions' => $tableName ? $tableName . '_role_has_permissions' : 'role_has_permissions',
+    ],
+
     // GMAPS Settings
     'gmaps' => [
         'api' => [

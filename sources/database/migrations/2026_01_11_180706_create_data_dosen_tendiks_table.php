@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableUsers = config('auth.providers.users.table');
-        $tableName = config('app.module.name');
+        $tableUsers = config('auth.providers.users.table') ? config('auth.providers.users.table') . '_users' : 'users';
+        $tableName = config('app.table.data_dosen_tendiks');
 
-        Schema::create($tableName . '_data_dosen_tendiks', function (Blueprint $table) use ($tableUsers) {
+        Schema::create($tableName, static function (Blueprint $table) use ($tableUsers) {
             $table->uuid('id')->primary();
             // RELASI KE AUTH
             $table->foreignUuid('user_id')->constrained($tableUsers)->onDelete('cascade');
@@ -45,6 +45,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('app.module.name') . '_data_dosen_tendiks');
+        $tableName = config('app.table.data_dosen_tendiks');
+
+        Schema::dropIfExists($tableName);
     }
 };
