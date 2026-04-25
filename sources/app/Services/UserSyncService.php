@@ -6,7 +6,6 @@ use App\Models\DataDosenTendik;
 use App\Models\DataMahasiswa;
 use App\Models\User;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 
@@ -14,11 +13,6 @@ class UserSyncService
 {
     /**
      * Menangani sinkronisasi user (Create/Update & Sync Roles)
-     * @param array $userData Data user mentah (format array dari JSON Homebase)
-     * @param string|null $accessToken Token OAuth (Opsional, null jika dari Emergency Login)
-     * @return User
-     * @throws Exception Jika role tidak diizinkan
-     * @throws \Throwable
      */
     public function handle(array $userData, ?string $accessToken = null, bool $onlyUpdateExisting = false)
     {
@@ -39,7 +33,6 @@ class UserSyncService
             $isSuperAdminRole = in_array('super admin', $incomingRoles, true);
 
             if (!$hasAccess && !$isSuperAdminRole) {
-                // Log akses ditolak
                 Log::warning("[TSU_DENIED_ACCESS] Akses ditolak untuk user: " . ($userData['email'] ?? 'unknown'), [
                     'incoming' => $incomingRoles,
                     'allowed' => $allowedRoles
@@ -50,7 +43,7 @@ class UserSyncService
 
         // LOGIC UPDATE / CREATE USER
         try {
-            return DB::transaction(function () use ($userData, $accessToken, $onlyUpdateExisting) {
+            return User::query()->getConnection()->transaction(function () use ($userData, $accessToken, $onlyUpdateExisting) {
                 $user = User::query()->where('sso_id', $userData['id'])->first();
 
                 if (!$user) {
@@ -62,7 +55,6 @@ class UserSyncService
                 }
 
                 if ($onlyUpdateExisting && !$user) {
-                    // Log skip user tidak ada di lokal
                     Log::info("[TSU_USER_SKIP] User tidak ditemukan: " . $userData['email']);
                     throw new \Exception('[TSU_USER_SKIP] User '. ucfirst(config('app.module.name')) .' tidak ditemukan.');
                 }
@@ -83,8 +75,7 @@ class UserSyncService
 
                 // Cek perubahan atribut
                 $userDirty = $user->isDirty();
-
-                $user->last_login_at    = now();
+                $user->last_login_at = now();
 
                 if ($accessToken) {
                     $user->sso_access_token = $accessToken;
@@ -93,18 +84,14 @@ class UserSyncService
                 $user->save();
 
                 $roleChanged = $this->syncUserRoles($user, $userData);
-
                 $profileChanged = $this->syncUserProfile($user, $userData);
-
-                $isAffected = $isNewUser || $userDirty || $roleChanged || $profileChanged;
 
                 return [
                     'user' => $user,
-                    'affected' => $isAffected
+                    'affected' => $isNewUser || $userDirty || $roleChanged || $profileChanged
                 ];
             });
         } catch (\Throwable $e) {
-            // Log rrror login
             if (str_contains($e->getMessage(), '[TSU_')) {
                 throw $e;
             }
@@ -120,7 +107,7 @@ class UserSyncService
     }
 
     /**
-     * Logika Sinkronisasi Role yang Aman
+     * Logika Sinkronisasi Role
      */
     private function syncUserRoles(User $user, array $userData): bool
     {
@@ -170,27 +157,21 @@ class UserSyncService
         // Preserve local roles
         $currentRoles = $user->getRoleNames()->toArray();
         $rolesToKeep = [];
-
-        // Cek flag is_identity
         $roleObjects = Role::whereIn('name', $currentRoles)->get()->keyBy('name');
 
         foreach ($currentRoles as $roleName) {
             $roleModel = $roleObjects->get($roleName);
-            $isGlobalIdentity = $roleModel ? $roleModel->is_identity : false;
-
-            if (!$isGlobalIdentity) {
+            if ($roleModel && !$roleModel->is_identity) {
                 $rolesToKeep[] = $roleName;
             }
         }
 
         $finalRoles = array_unique(array_merge($validLocalRoles, $rolesToKeep));
-
-        // Cek Perubahan
         $previousRoles = $user->getRoleNames()->toArray();
+
         sort($previousRoles);
         sort($finalRoles);
 
-        // Jika role lama beda dengan role baru
         if ($previousRoles !== $finalRoles) {
             // Eksekusi Sync
             $user->syncRoles($finalRoles);
@@ -201,69 +182,80 @@ class UserSyncService
     }
 
     /**
-     * Routing ke Profil yang tepat
+     * Routing ke Profil
      */
     private function syncUserProfile(User $user, array $data): bool
     {
-        $model = null;
-
         // Logika Profil User
         if ($user->hasAnyRole(['dosen', 'tendik', 'super admin', 'admin'])) {
             $this->syncDosenTendik($user, $data);
+            return true;
         } elseif ($user->hasRole('mahasiswa')) {
             $this->syncMahasiswa($user, $data);
-        }
-
-        // Cek perubahan data profil
-        if ($model) {
-            return $model->wasChanged() || $model->wasRecentlyCreated;
+            return true;
         }
 
         return false;
     }
 
-    // --- LOGIC PROFIL DOSEN / TENDIK ---
+    // --- LOGIC PROFIL DOSEN / TENDIK (MODE CLAIM PROFILE) ---
     private function syncDosenTendik(User $user, array $data): void
     {
+        $nik = $data['nik'] ?? $data['username'];
+
+        // Siapkan data yang pasti di-update (yaitu claim user_id)
+        $updateData = [
+            'user_id' => $user->id,
+            'nama'    => $data['name'],
+        ];
+
+        // PERISAI ANTI TIMPA: Hanya isi data dari SSO jika memang ada nilainya
+        // Biar data hasil migrasi SQL kita nggak rusak kerest jadi null
+        if (!empty($data['nidn'])) $updateData['nidn'] = $data['nidn'];
+        if (!empty($data['nip'])) $updateData['nip'] = $data['nip'];
+        if (!empty($data['gelar_depan'])) $updateData['gelar_depan'] = $data['gelar_depan'];
+        if (!empty($data['gelar_belakang'])) $updateData['gelar_belakang'] = $data['gelar_belakang'];
+        if (!empty($data['jabatan_fungsional'])) $updateData['jabatan_fungsional'] = $data['jabatan_fungsional'];
+        if (!empty($data['status_pegawai'])) $updateData['status_pegawai'] = $data['status_pegawai'];
+        if (!empty($data['nik_ktp'])) $updateData['nik_ktp'] = $data['nik_ktp'];
+        if (!empty($data['tempat_lahir'])) $updateData['tempat_lahir'] = $data['tempat_lahir'];
+        if (!empty($data['tgl_lahir'])) $updateData['tgl_lahir'] = $data['tgl_lahir'];
+        if (!empty($data['jk'])) $updateData['jenis_kelamin'] = $data['jk'];
+        if (!empty($data['no_hp'])) $updateData['no_hp'] = $data['no_hp'];
+        if (!empty($data['alamat'])) $updateData['alamat_domisili'] = $data['alamat'];
+
+        // Cari berdasarkan NIK, lalu klaim / update
         DataDosenTendik::query()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'nik'                => $data['nik'] ?? $data['username'],
-                'nidn'               => $data['nidn'] ?? null,
-                'nip'                => $data['nip'] ?? null,
-                'gelar_depan'        => $data['gelar_depan'] ?? null,
-                'gelar_belakang'     => $data['gelar_belakang'] ?? null,
-                'jabatan_fungsional' => $data['jabatan_fungsional'] ?? null,
-                'status_pegawai'     => $data['status_pegawai'] ?? null,
-                'nik_ktp'            => $data['nik_ktp'] ?? null,
-                'tempat_lahir'       => $data['tempat_lahir'] ?? null,
-                'tgl_lahir'          => $data['tgl_lahir'] ?? null,
-                'jenis_kelamin'      => $data['jk'] ?? null,
-                'no_hp'              => $data['no_hp'] ?? null,
-                'alamat_domisili'    => $data['alamat'] ?? null,
-            ]
+            ['nik' => $nik],
+            $updateData
         );
     }
 
-    // --- LOGIC PROFIL MAHASISWA ---
+    // --- LOGIC PROFIL MAHASISWA (MODE CLAIM PROFILE) ---
     private function syncMahasiswa(User $user, array $data): void
     {
+        $nim = $data['nim'] ?? $data['username'];
+
+        $updateData = [
+            'user_id' => $user->id,
+            'nama'    => $data['name'],
+        ];
+
+        if (!empty($data['nik_ktp'])) $updateData['nik_ktp'] = $data['nik_ktp'];
+        if (!empty($data['tempat_lahir'])) $updateData['tempat_lahir'] = $data['tempat_lahir'];
+        if (!empty($data['tgl_lahir'])) $updateData['tgl_lahir'] = $data['tgl_lahir'];
+        if (!empty($data['jk'])) $updateData['jenis_kelamin'] = $data['jk'];
+        if (!empty($data['agama'])) $updateData['agama'] = $data['agama'];
+        if (!empty($data['no_hp'])) $updateData['no_hp'] = $data['no_hp'];
+        if (!empty($data['email_pribadi'])) $updateData['email_pribadi'] = $data['email_pribadi'];
+        if (!empty($data['alamat'])) $updateData['alamat_lengkap'] = $data['alamat'];
+        if (!empty($data['nama_ayah'])) $updateData['nama_ayah'] = $data['nama_ayah'];
+        if (!empty($data['nama_ibu'])) $updateData['nama_ibu'] = $data['nama_ibu'];
+        if (!empty($data['no_hp_ortu'])) $updateData['no_hp_ortu'] = $data['no_hp_ortu'];
+
         DataMahasiswa::query()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'nim'               => $data['nim'] ?? $data['username'],
-                'nik_ktp'           => $data['nik_ktp'] ?? null,
-                'tempat_lahir'      => $data['tempat_lahir'] ?? null,
-                'tgl_lahir'         => $data['tgl_lahir'] ?? null,
-                'jenis_kelamin'     => $data['jk'] ?? null,
-                'agama'             => $data['agama'] ?? null,
-                'no_hp'             => $data['no_hp'] ?? null,
-                'email_pribadi'     => $data['email_pribadi'] ?? null,
-                'alamat_lengkap'    => $data['alamat'] ?? null,
-                'nama_ayah'         => $data['nama_ayah'] ?? null,
-                'nama_ibu'          => $data['nama_ibu'] ?? null,
-                'no_hp_ortu'        => $data['no_hp_ortu'] ?? null,
-            ]
+            ['nim' => $nim],
+            $updateData
         );
     }
 }

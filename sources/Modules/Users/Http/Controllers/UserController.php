@@ -55,18 +55,27 @@ class UserController extends MiddlewareController
             })
             ->addColumn('action', function ($row) {
                 if ($row->email === config('app.pikdi.email', 'pikdi@tsu.ac.id')) {
-                    return '<span class="badge badge-warning"><i class="fas fa-lock"></i> PROTECTED</span>';
+                    return '<div class="text-center"><span class="badge badge-warning shadow-sm"><i class="fas fa-lock"></i> PROTECTED</span></div>';
                 }
 
                 if (auth()->id() === $row->id) {
-                    return '<span class="badge badge-success">Sedang Online</span>';
+                    return '<div class="text-center"><span class="badge badge-success shadow-sm"><i class="fas fa-circle text-white" style="font-size: 8px; vertical-align: middle;"></i> Sedang Online</span></div>';
                 }
 
-                return $this->getActionButtons($row, 'users:user', [
-                    'edit_url'   => route('users.user.edit', $row->id),
-                    'use_modal'  => false,
-                    'delete_url' => route('users.user.destroy', $row->id)
-                ]);
+                $deleteUrl = route('users.user.destroy', $row->id);
+                $token = csrf_token();
+
+                $btnDelete = '
+                                <form action="'.$deleteUrl.'" method="POST" style="display:inline-block; margin: 0;">
+                                    <input type="hidden" name="_token" value="'.$token.'">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="button" class="btn btn-sm btn-danger btn-delete shadow-sm" data-name="'. htmlspecialchars($row->name) .'" title="Hapus Akses Sistem">
+                                        <i class="fas fa-user-times mr-1"></i> Cabut Akses
+                                    </button>
+                                </form>
+                            ';
+
+                return '<div class="text-center">' . $btnDelete . '</div>';
             })
             ->rawColumns(['avatar', 'roles', 'action'])
             ->make(true);
