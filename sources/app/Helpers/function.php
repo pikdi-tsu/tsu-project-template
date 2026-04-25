@@ -139,8 +139,13 @@ if (! function_exists('Bulan')) {
 if (! function_exists('tglIndo')) {
     function tglIndo($str)
     {
-        if ($str != '') :
+        if ($str !== '') :
             list($Thn, $Bln, $Tgl) = explode('-', $str, 3);
+
+            if (str_contains($Tgl, ' ')) {
+                $Tgl = explode(' ', $Tgl)[0];
+            }
+
             $str = $Tgl . ' ' . Bulan($Bln) . ' ' . $Thn;
             return $str;
         else :

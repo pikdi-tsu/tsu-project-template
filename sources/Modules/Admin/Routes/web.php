@@ -12,10 +12,19 @@
 */
 
 use Modules\Admin\Http\Controllers\DashboardController;
+use Modules\Admin\Http\Controllers\DataKaryawanController;
+use Modules\System\Http\Middleware\CheckAdminRole;
 
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-
-    // URL: tsu-app.test/admin/dashboard
-    // Name: route('admin.dashboard.index')
+Route::prefix('admin')->name('admin.')->middleware(['auth', CheckAdminRole::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // --- ROUTE DATA KARYAWAN ---
+    Route::prefix('data-karyawan')->name('data-karyawan.')->group(function () {
+        // Route JSON
+        Route::get('/json', [DataKaryawanController::class, 'datatable'])->name('json');
+
+        // Route CRUD
+        Route::resource('/', DataKaryawanController::class)->parameters(['' => 'id']);
+        Route::post('/{id}/bio-aktif', [DataKaryawanController::class, 'bioAktif'])->name('bio-aktif');
+    });
 });

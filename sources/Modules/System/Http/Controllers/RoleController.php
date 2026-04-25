@@ -288,7 +288,7 @@ class RoleController extends MiddlewareController
 
     public function store(Request $request)
     {
-        $this->guard('create', 'system:role');
+        $this->guardStore($request->id, 'system:role');
 
         // Validasi
         $request->validate([

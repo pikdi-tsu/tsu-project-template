@@ -44,6 +44,7 @@
     <link rel="stylesheet" href="{{ asset('public/assets/plugins/sweetalert2/sweetalert2.min.css') }}">
     <script src="{{ asset('public/assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @yield('link_href')
+    @yield('css')
 </head>
 <body class="hold-transition sidebar-mini layout-navbar-fixed">
     <div class="wrapper">

@@ -55,6 +55,16 @@ class User extends Authenticatable
         return config('app.table.users');
     }
 
+    /**
+     * Cek apakah user memiliki unsur role admin (Partial Match)
+     */
+    public function isAdmin(): bool
+    {
+        return $this->roles->contains(function ($role) {
+            return str_contains(strtolower($role->name), 'admin');
+        });
+    }
+
     // Relasi ke Profil Mahasiswa
     public function mahasiswa()
     {
