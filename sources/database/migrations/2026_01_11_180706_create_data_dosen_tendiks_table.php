@@ -16,25 +16,49 @@ return new class extends Migration
 
         Schema::create($tableName, static function (Blueprint $table) use ($tableUsers) {
             $table->uuid('id')->primary();
-            // RELASI KE AUTH
-            $table->foreignUuid('user_id')->constrained($tableUsers)->onDelete('cascade');
 
-            // --- DATA KEPEGAWAIAN ---
-            $table->string('nik')->unique(); // Nomor Induk Karyawan
-            $table->string('nidn', 20)->nullable()->unique();
-            $table->string('nip', 25)->nullable(); // NIP PNS (jika ada)
-            $table->string('gelar_depan')->nullable();
-            $table->string('gelar_belakang')->nullable();
-            $table->string('jabatan_fungsional')->nullable(); // Asisten Ahli, Lektor
-            $table->string('status_pegawai')->nullable(); // TETAP, KONTRAK, LB
+            // RELASI KE AUTH (SSO)
+            $table->foreignUuid('user_id')->nullable()->constrained($tableUsers)->onDelete('set null');
 
-            // --- DATA PRIBADI ---
-            $table->string('nik_ktp', 100)->nullable();
+            // DATA KEPEGAWAIAN UTAMA
+            $table->string('nik', 50)->nullable()->unique(); // NIK Internal TSU
+            $table->string('nidn', 50)->nullable()->unique();
+            $table->string('nip', 50)->nullable(); // NIP PNS
+            $table->string('nuptk', 100)->nullable();
+            $table->string('status_pegawai', 50)->nullable(); // TETAP, KONTRAK, LB
+            $table->string('keilmuan_inti', 100)->nullable();
+
+            // DATA PRIBADI
+            $table->string('gelar_depan', 20)->nullable();
+            $table->string('nama')->nullable();
+            $table->string('gelar_belakang', 50)->nullable();
+            $table->string('nik_ktp', 50)->nullable();
+            $table->string('no_npwp', 50)->nullable();
             $table->string('tempat_lahir', 100)->nullable();
             $table->date('tgl_lahir')->nullable();
             $table->string('jenis_kelamin', 20)->nullable();
+            $table->string('status_perkawinan', 30)->nullable();
+            $table->tinyInteger('jumlah_anak')->default(0)->nullable();
             $table->string('no_hp', 25)->nullable();
-            $table->text('alamat_domisili')->nullable();
+            $table->text('alamat_lengkap')->nullable(); // Sesuai KTP
+            $table->text('alamat_domisili')->nullable(); // Tempat tinggal sekarang
+
+            // DATA JABATAN STRUKTURAL
+            $table->string('jabatan_struktural')->nullable();
+            $table->date('tgl_mulai_jabatan_struktural')->nullable();
+            $table->string('periode_jabatan_struktural')->nullable();
+
+            // DATA JABATAN FUNGSIONAL
+            $table->string('jabatan_fungsional')->nullable(); // Asisten Ahli, Lektor, dll
+            $table->string('pangkat_jabatan_fungsional')->nullable();
+            $table->date('tmt_jabatan_fungsional')->nullable();
+            $table->string('sk_jabatan_fungsional')->nullable(); // Nomor SK-nya
+
+            // DOKUMEN / BERKAS DIGITAL (Menyimpan path/URL file)
+            $table->text('scan_ktp')->nullable();
+            $table->text('scan_kk')->nullable();
+            $table->text('scan_npwp')->nullable();
+            $table->text('scan_ijazah')->nullable();
 
             $table->timestamps();
         });
