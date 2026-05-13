@@ -21,6 +21,15 @@ class MenuSeeder extends Seeder
             'permission_name' => '',
         ]);
 
+        // Data Karyawan
+        MenuSidebar::query()->create([
+            'name' => 'Data Karyawan',
+            'route' => 'admin.data-karyawan.index',
+            'icon' => 'fas fa-address-book',
+            'order' => 0,
+            'permission_name' => 'admin:data-karyawan:view',
+        ]);
+
         // System Management (Parent Menu)
         $system = MenuSidebar::query()->create([
             'name' => 'System Management',

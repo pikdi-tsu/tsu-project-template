@@ -4,31 +4,14 @@ namespace Modules\System\Http\Controllers;
 
 use App\Models\DataDosenTendik;
 use App\Models\DataMahasiswa;
-use App\Models\GroupUserModel;
-use App\Models\MasterGroupModel;
-use App\Models\ModulModel;
-use App\Models\MahasiswaModel;
-use App\Models\PegawaiModel;
-use App\Models\PertanyaanKeamanan;
-use App\Models\SiakadMahasiswa;
-use App\Models\UserDosenTendik;
-use App\Models\UserMahasiswa;
-use App\Models\UserResetPasswordModel;
 use App\Models\User;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Hash;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Carbon;
-
-use Illuminate\Support\Facades\Session, Crypt, DB;
+use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
@@ -108,41 +91,47 @@ class LoginController extends Controller
         ];
 
         if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+            try {
+                $request->session()->regenerate();
 
-            $superAdminModule = 'super admin ' . config('app.module.name');
-            $user = Auth::user();
-            $roles = $user->getRoleNames()->toArray();
-            $isMahasiswa = in_array('mahasiswa', $roles, true);
+                $superAdminModule = 'super admin ' . config('app.module.name');
+                $user = Auth::user();
+                $roles = $user->getRoleNames()->toArray();
+                $isMahasiswa = in_array('mahasiswa', $roles, true);
 
-            $profil = null;
-            if ($isMahasiswa) {
-                $profil = DataMahasiswa::query()->where('user_id', $user->id)->first();
-                $roleLabel = 'mahasiswa';
-            } else {
-                $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
-                $roleLabel = $roles[0] ?? 'user';
+                $profil = null;
+                if ($isMahasiswa) {
+                    $profil = DataMahasiswa::query()->where('user_id', $user->id)->first();
+                    $roleLabel = 'mahasiswa';
+                } else {
+                    $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
+                    $roleLabel = $roles[0] ?? 'user';
+                }
+
+                if ($profil) {
+                    Session::put('active_role', $roleLabel);
+                    Session::put('active_profile_id', $profil->id);
+                    Session::put('active_identity', $profil->nim ?? $profil->nik ?? $profil->nidn ?? '-');
+                } elseif ($user->email === config('app.pikdi.email') || in_array($superAdminModule, $roles, true)) {
+                    // Biarkan masuk mode darurat tanpa profil
+                    Session::put('active_role', 'super admin');
+                    Session::put('active_identity', 'ADMIN-PUSAT');
+                } else {
+                    // Paksa logout jika profil tidak ada (kecuali super admin)
+                    throw new \Exception('[TSU_LOGIN_NOPROFILE] Data Profil (Dosen/Mhs) tidak ditemukan. Hubungi Admin.');
+                }
+
+                // Bersihkan rate limiter dan session block
+                session()->forget('manual_block_until');
+                $this->clearLoginAttempts($request);
+
+                return redirect()->route('admin.dashboard')
+                    ->with('success', 'Login Berhasil!');
+
+            } catch (\Exception $e) {
+                Auth::logout(); // Pastikan logout jika ada error setelah login
+                return TsuErrorHandlerService::handleHtml($e, '[TSU_LOGIN_FAIL]', 'Terjadi kesalahan saat proses login.', 'Gagal Login.', $request);
             }
-
-            if ($profil) {
-                Session::put('active_role', $roleLabel);
-                Session::put('active_profile_id', $profil->id);
-                Session::put('active_identity', $profil->nim ?? $profil->nik ?? $profil->nidn ?? '-');
-            } elseif ($user->email === config('app.pikdi.email') || in_array($superAdminModule, $roles, true)) {
-                // Biarkan masuk mode darurat tanpa profil
-                Session::put('active_role', 'super admin');
-                Session::put('active_identity', 'ADMIN-PUSAT');
-            } else {
-                Auth::logout();
-                return back()->with('error', 'Data Profil (Dosen/Mhs) tidak ditemukan. Hubungi Admin.');
-            }
-
-            // Bersihkan rate limiter dan session block
-            session()->forget('manual_block_until');
-            $this->clearLoginAttempts($request);
-
-            return redirect()->route('admin.dashboard.index')
-                ->with('success', 'Login Berhasil!');
         }
 
         $this->incrementLoginAttempts($request);

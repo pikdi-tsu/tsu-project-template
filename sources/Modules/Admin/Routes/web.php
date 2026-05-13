@@ -15,11 +15,12 @@ use Modules\Admin\Http\Controllers\DashboardController;
 use Modules\Admin\Http\Controllers\DataKaryawanController;
 use Modules\System\Http\Middleware\CheckAdminRole;
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', CheckAdminRole::class])->group(function () {
+// Aktifkan CheckAdminRole::class di middleware jika ada dashboard users sendiri
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // --- ROUTE DATA KARYAWAN ---
-    Route::prefix('data-karyawan')->name('data-karyawan.')->group(function () {
+    Route::prefix('data-karyawan')->name('data-karyawan.')->middleware(['permission:admin:data-karyawan:view'])->group(function () {
         // Route JSON
         Route::get('/json', [DataKaryawanController::class, 'datatable'])->name('json');
 
