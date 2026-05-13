@@ -2,24 +2,18 @@
 
 namespace Modules\System\Http\Controllers;
 
-use App\Models\GroupUserModel;
 use App\Models\MahasiswaModel;
-use App\Models\MasterGroupModel;
-use App\Models\ModulModel;
 use App\Models\PegawaiModel;
 use App\Models\User;
-use App\Models\UserResetPasswordModel;
-use App\User as AppUser;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\DataTables;
-
-use Session, Crypt, DB;
 
 class SettingController extends Controller
 {
@@ -39,73 +33,74 @@ class SettingController extends Controller
 
     public function saveChangePassword(Request $post)
     {
-        // header("Access-Control-Allow-Origin: *");
-        // header("Access-Control-Allow-Headers: *");
-        // dd($post->_token);
-        //cek password
-        $oldpass = $post->oldpass;
-        $newpass = $post->newpass;
-        $newpass2 = $post->newpass2;
-        // dd(preg_match('/\d/', $$oldpass));
-        if((preg_match('/[[:punct:]]/', $oldpass))==1||(preg_match('/[A-Z]/', $oldpass))==0||(preg_match('/\d/', $oldpass))==0||strlen($oldpass)<8){
-            Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
-            return redirect()->back();
-        }
-
-        if((preg_match('/[[:punct:]]/', $newpass))==1||(preg_match('/[A-Z]/', $newpass))==0||(preg_match('/\d/', $newpass))==0||strlen($newpass)<8){
-            Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
-            return redirect()->back();
-        }
-
-        if((preg_match('/[[:punct:]]/', $newpass2))==1||(preg_match('/[A-Z]/', $newpass2))==0||(preg_match('/\d/', $newpass2))==0||strlen($newpass2)<8){
-            Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
-            return redirect()->back();
-        }
-
-        if($newpass!=$newpass2){
-            Session::flash('alert', ['title' => 'Gagal','message' => 'Password Baru Tidak Sama ! Silahkan Ulangi !','status' => 'error']);
-            return redirect()->back();
-        }
-
-        $nik = session('session')['user_nik'];
-        $email = session('session')['email'];
-
-        $cek = User::where('nik',$nik)->where('email',$email)->where('isactive',1)->first();
-        // dd(Hash::check($oldpass,$cek->password));
-        if($cek){
-            if(Hash::check($newpass,$cek->password)){
-                Session::flash('alert', ['title' => 'Gagal','message' => 'Password Baru Tidak Boleh Sama Seperti Password Lama !','status' => 'error']);
+        try {
+            //cek password
+            $oldpass = $post->oldpass;
+            $newpass = $post->newpass;
+            $newpass2 = $post->newpass2;
+            // dd(preg_match('/\d/', $$oldpass));
+            if((preg_match('/[[:punct:]]/', $oldpass))==1||(preg_match('/[A-Z]/', $oldpass))==0||(preg_match('/\d/', $oldpass))==0||strlen($oldpass)<8){
+                Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
                 return redirect()->back();
             }
-            if(Hash::check($oldpass,$cek->password)){
-                $user = array(
-                    'password' => Hash::make($newpass),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                    'updated_by' => $nik
-                );
-                $up1 = User::where('nik',$nik)->where('email',$email)->where('isactive',1)->update($user);
-                $logreset = array(
-                    'email' => $email,
-                    'token' => $post->_token,
-                    'activity' => 'Change Password',
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'created_by' => session('session')['user_nik']
-                );
-                $up2 = UserResetPasswordModel::insert($logreset);
-                if($up1 && $up2){
-                    Session::flash('alert', ['title' => 'Berhasil','message' => 'Password Berubah','status' => 'success']);
+
+            if((preg_match('/[[:punct:]]/', $newpass))==1||(preg_match('/[A-Z]/', $newpass))==0||(preg_match('/\d/', $newpass))==0||strlen($newpass)<8){
+                Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
+                return redirect()->back();
+            }
+
+            if((preg_match('/[[:punct:]]/', $newpass2))==1||(preg_match('/[A-Z]/', $newpass2))==0||(preg_match('/\d/', $newpass2))==0||strlen($newpass2)<8){
+                Session::flash('alert', ['title' => 'Gagal','message' => 'Pergantian Password Gagal ! Silahkan Baca Note !','status' => 'error']);
+                return redirect()->back();
+            }
+
+            if($newpass!=$newpass2){
+                Session::flash('alert', ['title' => 'Gagal','message' => 'Password Baru Tidak Sama ! Silahkan Ulangi !','status' => 'error']);
+                return redirect()->back();
+            }
+
+            $nik = session('session')['user_nik'];
+            $email = session('session')['email'];
+
+            $cek = User::where('nik',$nik)->where('email',$email)->where('isactive',1)->first();
+            // dd(Hash::check($oldpass,$cek->password));
+            if($cek){
+                if(Hash::check($newpass,$cek->password)){
+                    Session::flash('alert', ['title' => 'Gagal','message' => 'Password Baru Tidak Boleh Sama Seperti Password Lama !','status' => 'error']);
                     return redirect()->back();
+                }
+                if(Hash::check($oldpass,$cek->password)){
+                    $user = array(
+                        'password' => Hash::make($newpass),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                        'updated_by' => $nik
+                    );
+                    $up1 = User::where('nik',$nik)->where('email',$email)->where('isactive',1)->update($user);
+                    $logreset = array(
+                        'email' => $email,
+                        'token' => $post->_token,
+                        'activity' => 'Change Password',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'created_by' => session('session')['user_nik']
+                    );
+                    $up2 = UserResetPasswordModel::insert($logreset);
+                    if($up1 && $up2){
+                        Session::flash('alert', ['title' => 'Berhasil','message' => 'Password Berubah','status' => 'success']);
+                        return redirect()->back();
+                    }else{
+                        Session::flash('alert', ['title' => 'Gagal','message' => 'Password Tidak Berubah !','status' => 'error']);
+                        return redirect()->back();
+                    }
                 }else{
-                    Session::flash('alert', ['title' => 'Gagal','message' => 'Password Tidak Berubah !','status' => 'error']);
+                    Session::flash('alert', ['title' => 'Gagal','message' => 'Password Salah !','status' => 'error']);
                     return redirect()->back();
                 }
             }else{
-                Session::flash('alert', ['title' => 'Gagal','message' => 'Password Salah !','status' => 'error']);
+                Session::flash('alert', ['title' => 'Gagal','message' => 'User Tidak Ada ! Silahkan Hubungi Team IT','status' => 'error']);
                 return redirect()->back();
             }
-        }else{
-            Session::flash('alert', ['title' => 'Gagal','message' => 'User Tidak Ada ! Silahkan Hubungi Team IT','status' => 'error']);
-            return redirect()->back();
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PWD_CHANGE_FAIL]', 'Gagal mengubah password.', 'Gagal Ubah Password.', $post);
         }
     }
     //END change password normal
@@ -125,24 +120,27 @@ class SettingController extends Controller
 
     public function saveEditProfile(Request $post)
     {
-        // dd($post);
-        if ($post->hasFile('photoprofile')) {
-            // $file->getClientOriginalName() -> mengambil nama file
-            $file = $post->file('photoprofile');
-            $ext = $file->getClientOriginalExtension();
-            // dd($ext);
-            $filename = time() . '_' . session('session')['user_nik'].'.'.$ext;
-            $file->storeAs('FILE_PHOTOPROFILE', $filename);
-            User::where('nik',session('session')['user_nik'])->where('email',session('session')['email'])->where('isactive',1)->update([
-                'photo_profile' => $filename,
-                'updated_at' => date('Y-m-d H:i:s'),
-                'updated_by' => session('session')['user_nik']
-            ]);
-            Session::flash('alert', ['title' => 'Berhasil','message' => 'Profil Berhasil Diperbarui','status' => 'success']);
-            return redirect()->back();
-        }else{
-            Session::flash('alert', ['title' => 'Gagal','message' => 'Foto Tidak ditemukan','status' => 'error']);
-            return redirect()->back();
+        try {
+            if ($post->hasFile('photoprofile')) {
+                // $file->getClientOriginalName() -> mengambil nama file
+                $file = $post->file('photoprofile');
+                $ext = $file->getClientOriginalExtension();
+                // dd($ext);
+                $filename = time() . '_' . session('session')['user_nik'].'.'.$ext;
+                $file->storeAs('FILE_PHOTOPROFILE', $filename);
+                User::where('nik',session('session')['user_nik'])->where('email',session('session')['email'])->where('isactive',1)->update([
+                    'photo_profile' => $filename,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                    'updated_by' => session('session')['user_nik']
+                ]);
+                Session::flash('alert', ['title' => 'Berhasil','message' => 'Profil Berhasil Diperbarui','status' => 'success']);
+                return redirect()->back();
+            }else{
+                Session::flash('alert', ['title' => 'Gagal','message' => 'Foto Tidak ditemukan','status' => 'error']);
+                return redirect()->back();
+            }
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PROFILE_UPD_FAIL]', 'Gagal memperbarui profil.', 'Gagal Update Profil.', $post);
         }
     }
     //END Edit Profile
@@ -267,13 +265,16 @@ class SettingController extends Controller
 
     public function StoreUser(Request $post)
     {
-        // dd($post);
-        if($post->userid==null){
-            $alert = $this->SaveUser($post);
-        }else{
-            $alert = $this->EditSaveUser($post);
+        try {
+            if($post->userid==null){
+                $alert = $this->SaveUser($post);
+            }else{
+                $alert = $this->EditSaveUser($post);
+            }
+            return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_USER_STORE_FAIL]', 'Gagal menyimpan data user.', 'Gagal Simpan User.', $post);
         }
-        return redirect()->back()->with('alert',$alert);
     }
 
     public function SaveUser($post)
@@ -369,25 +370,29 @@ class SettingController extends Controller
 
     public function DeleteUser($params)
     {
-        $id = decrypt($params);
-        // dd($id);
-        $cek = User::where('id',$id)->first();
-        if(session('session')['user_nik']==$cek->nik){
-            $alert = ['title' => 'Gagal','message' => 'User Masih Aktif !','status' => 'error'];
-            return response()->json($alert, Response::HTTP_OK);
-        }
-         $update = User::where('id',$id)->update([
-            'isactive' => 0,
-            'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => session('session')['user_nik']
-         ]);
+        try {
+            $id = decrypt($params);
+            // dd($id);
+            $cek = User::where('id',$id)->first();
+            if(session('session')['user_nik']==$cek->nik){
+                $alert = ['title' => 'Gagal','message' => 'User Masih Aktif !','status' => 'error'];
+                return response()->json($alert, Response::HTTP_OK);
+            }
+             $update = User::where('id',$id)->update([
+                'isactive' => 0,
+                'updated_at' => date('Y-m-d H:i:s'),
+                'updated_by' => session('session')['user_nik']
+             ]);
 
-        if($update){
-            $alert = ['title' => 'Berhasil','message' => 'User Berhasil dihapus','status' => 'success'];
-        }else{
-            $alert = ['title' => 'Gagal','message' => 'User Gagal dihapus','status' => 'error'];
+            if($update){
+                $alert = ['title' => 'Berhasil','message' => 'User Berhasil dihapus','status' => 'success'];
+            }else{
+                $alert = ['title' => 'Gagal','message' => 'User Gagal dihapus','status' => 'error'];
+            }
+            return response()->json($alert, Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleJson($e, '[TSU_USER_DELETE_FAIL]', 'Gagal menghapus user.');
         }
-        return response()->json($alert, Response::HTTP_OK);
     }
     //END User Management
 
@@ -479,68 +484,75 @@ class SettingController extends Controller
 
     public function ResetPassword($params)
     {
-        // dd($params);
-        $id = decrypt($params);
-        $cek = User::where('id',$id)->first();
-        if($cek==null){
-            $alert = ['title' => 'Gagal','message' => 'User Tidak Terdaftar','status' => 'error'];
+        try {
+            $id = decrypt($params);
+            $cek = User::where('id',$id)->first();
+            if($cek==null){
+                $alert = ['title' => 'Gagal','message' => 'User Tidak Terdaftar','status' => 'error'];
+                return redirect()->back()->with('alert',$alert);
+            }
+
+            $update = User::where('id',$id)->update([
+                'password' => Hash::make(defaultpassword()),
+                'updated_at' => date('Y-m-d H:i:s'),
+                'updated_by' => session('session')['user_nik']
+            ]);
+
+            if($update){
+                $logreset = array(
+                    'email' => $cek->email,
+                    'token' => session('_token'),
+                    'activity' => 'Reset Password',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_by' => session('session')['user_nik']
+                );
+                UserResetPasswordModel::insert($logreset);
+                $alert = ['title' => 'Berhasil','message' => 'Password Berhasil direset','status' => 'success'];
+            }else{
+                $alert = ['title' => 'Gagal','message' => 'Password Gagal direset','status' => 'error'];
+            }
             return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PWD_RESET_FAIL]', 'Gagal mereset password.');
         }
-
-        $update = User::where('id',$id)->update([
-            'password' => Hash::make(defaultpassword()),
-            'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => session('session')['user_nik']
-        ]);
-
-        if($update){
-            $logreset = array(
-                'email' => $cek->email,
-                'token' => session('_token'),
-                'activity' => 'Reset Password',
-                'created_at' => date('Y-m-d H:i:s'),
-                'created_by' => session('session')['user_nik']
-            );
-            UserResetPasswordModel::insert($logreset);
-            $alert = ['title' => 'Berhasil','message' => 'Password Berhasil direset','status' => 'success'];
-        }else{
-            $alert = ['title' => 'Gagal','message' => 'Password Gagal direset','status' => 'error'];
-        }
-        return redirect()->back()->with('alert',$alert);
     }
 
     public function ResetQA($params)
     {
-        $id = decrypt($params);
-        $cek = User::where('id',$id)->first();
-        if($cek==null){
-            $alert = ['title' => 'Gagal','message' => 'User Tidak Terdaftar','status' => 'error'];
+        try {
+            $id = decrypt($params);
+            $cek = User::where('id',$id)->first();
+            if($cek==null){
+                $alert = ['title' => 'Gagal','message' => 'User Tidak Terdaftar','status' => 'error'];
+                return redirect()->back()->with('alert',$alert);
+            }
+
+            $update = User::where('id',$id)->update([
+                'q1' => null,
+                'a1' => null,
+                'q2' => null,
+                'a2' => null,
+                'updated_at' => date('Y-m-d H:i:s'),
+                'updated_by' => session('session')['user_nik']
+            ]);
+
+            if($update){
+                $logreset = array(
+                    'email' => $cek->email,
+                    'token' => session('_token'),
+                    'activity' => 'Reset QA',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_by' => session('session')['user_nik']
+                );
+                UserResetPasswordModel::insert($logreset);
+                $alert = ['title' => 'Berhasil','message' => 'Pertanyaan Keamanan Berhasil direset','status' => 'success'];
+            }else{
+                $alert = ['title' => 'Gagal','message' => 'Pertanyaan Keamanan Gagal direset','status' => 'error'];
+            }
             return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_QA_RESET_FAIL]', 'Gagal mereset pertanyaan keamanan.');
         }
-
-        $update = User::where('id',$id)->update([
-            'q1' => null,
-            'a1' => null,
-            'q2' => null,
-            'a2' => null,
-            'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => session('session')['user_nik']
-        ]);
-
-        if($update){
-            $logreset = array(
-                'email' => $cek->email,
-                'token' => session('_token'),
-                'activity' => 'Reset QA',
-                'created_at' => date('Y-m-d H:i:s'),
-                'created_by' => session('session')['user_nik']
-            );
-            UserResetPasswordModel::insert($logreset);
-            $alert = ['title' => 'Berhasil','message' => 'Pertanyaan Keamanan Berhasil direset','status' => 'success'];
-        }else{
-            $alert = ['title' => 'Gagal','message' => 'Pertanyaan Keamanan Gagal direset','status' => 'error'];
-        }
-        return redirect()->back()->with('alert',$alert);
     }
     //END User Reset
 
@@ -621,76 +633,83 @@ class SettingController extends Controller
 
     public function SaveUpdateMenu(Request $post)
     {
-        // dd($post);
-        $id = isset($post->menuid) ? decrypt($post->menuid) : null;
-        $modul = $post->modul;
-        $menu = $post->menu;
-        $alias = $post->alias;
-        $aktif = $post->aktif;
+        try {
+            $id = isset($post->menuid) ? decrypt($post->menuid) : null;
+            $modul = $post->modul;
+            $menu = $post->menu;
+            $alias = $post->alias;
+            $aktif = $post->aktif;
 
-        $check = ModulModel::where('menu','LIKE','%'.$menu.'%')->first();
-        if($check){
-            $alert = ['title' => 'Gagal','message' => 'Menu Sudah Ada','status' => 'warning'];
-            return redirect()->back()->with('alert',$alert);
-        }else{
-            $in = false;
-            if($id){
-                $up = array(
-                    'modul' => $modul,
-                    'menu' => $menu,
-                    'alias' => $alias,
-                    'MenuAktif' => $aktif,
-                    'updated_at' => date('Y_m-d H:i:s'),
-                    'updated_by' => session('session')['user_nik']
-                );
-                $in = ModulModel::where('IdMenu',$id)->update($up);
-                $mesage = 'Menu Berhasil Diperbarui';
+            $check = ModulModel::where('menu','LIKE','%'.$menu.'%')->first();
+            if($check){
+                $alert = ['title' => 'Gagal','message' => 'Menu Sudah Ada','status' => 'warning'];
+                return redirect()->back()->with('alert',$alert);
             }else{
-                $up = array(
-                    'modul' => $modul,
-                    'menu' => $menu,
-                    'alias' => $alias,
-                    'MenuAktif' => $aktif,
-                    'created_at' => date('Y_m-d H:i:s'),
-                    'created_by' => session('session')['user_nik']
-                );
-                $in = ModulModel::insert($up);
-                $mesage = 'Menu Berhasil Disimpan';
+                $in = false;
+                if($id){
+                    $up = array(
+                        'modul' => $modul,
+                        'menu' => $menu,
+                        'alias' => $alias,
+                        'MenuAktif' => $aktif,
+                        'updated_at' => date('Y_m-d H:i:s'),
+                        'updated_by' => session('session')['user_nik']
+                    );
+                    $in = ModulModel::where('IdMenu',$id)->update($up);
+                    $mesage = 'Menu Berhasil Diperbarui';
+                }else{
+                    $up = array(
+                        'modul' => $modul,
+                        'menu' => $menu,
+                        'alias' => $alias,
+                        'MenuAktif' => $aktif,
+                        'created_at' => date('Y_m-d H:i:s'),
+                        'created_by' => session('session')['user_nik']
+                    );
+                    $in = ModulModel::insert($up);
+                    $mesage = 'Menu Berhasil Disimpan';
+                }
+                if($in){
+                    $alert = ['title' => 'Berhasil','message' => $mesage,'status' => 'success'];
+                }else{
+                    $alert = ['title' => 'Gagal','message' => 'Menu Gagal Ditambahkan','status' => 'error'];
+                }
+                return redirect()->back()->with('alert',$alert);
             }
-            if($in){
-                $alert = ['title' => 'Berhasil','message' => $mesage,'status' => 'success'];
-            }else{
-                $alert = ['title' => 'Gagal','message' => 'Menu Gagal Ditambahkan','status' => 'error'];
-            }
-            return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_MENU_SAVE_FAIL]', 'Gagal menyimpan menu.', 'Gagal Simpan Menu.', $post);
         }
     }
 
     public function DeleteMenu($params1,$params2)
     {
-        $id = decrypt($params1);
-        $aktif = decrypt($params2);
-        $cekmenu = ModulModel::where('IdMenu',$id)->selectRaw('modul,menu,alias')->first();
-        $cek = GroupUserModel::where('Modul',$cekmenu->modul)->where('Menu',$cekmenu->menu)->first();
-        // dd($cek);
-        if($cek){
-            $alert = ['title' => 'Gagal','message' => 'Menu Sudah Digunakan !','status' => 'error'];
+        try {
+            $id = decrypt($params1);
+            $aktif = decrypt($params2);
+            $cekmenu = ModulModel::where('IdMenu',$id)->selectRaw('modul,menu,alias')->first();
+            $cek = GroupUserModel::where('Modul',$cekmenu->modul)->where('Menu',$cekmenu->menu)->first();
+            // dd($cek);
+            if($cek){
+                $alert = ['title' => 'Gagal','message' => 'Menu Sudah Digunakan !','status' => 'error'];
+                return redirect()->back()->with('alert',$alert);
+            }
+            $up = array(
+                'MenuAktif' => $aktif,
+                'updated_at' => date('Y-m-d H:i:s'),
+                'updated_by' => session('session')['user_nik']
+            );
+
+            $update = ModulModel::where('IdMenu',$id)->update($up);
+
+            if($update){
+                $alert = ['title' => 'Berhasil','message' => 'Menu Berhasil Diperbarui','status' => 'success'];
+            }else{
+                $alert = ['title' => 'Gagal','message' => 'Menu Gagal Diperbarui','status' => 'error'];
+            }
             return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_MENU_DELETE_FAIL]', 'Gagal menghapus menu.');
         }
-        $up = array(
-            'MenuAktif' => $aktif,
-            'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => session('session')['user_nik']
-        );
-
-        $update = ModulModel::where('IdMenu',$id)->update($up);
-
-        if($update){
-            $alert = ['title' => 'Berhasil','message' => 'Menu Berhasil Diperbarui','status' => 'success'];
-        }else{
-            $alert = ['title' => 'Gagal','message' => 'Menu Gagal Diperbarui','status' => 'error'];
-        }
-        return redirect()->back()->with('alert',$alert);
 
     }
     //END Menu Akses
@@ -732,43 +751,47 @@ class SettingController extends Controller
 
     public function SaveUpdateGroupUser(Request $post)
     {
-        $id = isset($post->groupuserid) ? decrypt($post->groupuserid) : null;
-        $groupuser = $post->groupuser;
+        try {
+            $id = isset($post->groupuserid) ? decrypt($post->groupuserid) : null;
+            $groupuser = $post->groupuser;
 
-        $check = MasterGroupModel::where('NamaGroup','LIKE','%'.$groupuser.'%')->first();
-        if($check){
-            $alert = ['title' => 'Gagal','message' => 'Nama Sudah Ada !','status' => 'warning'];
-            return redirect()->back()->with('alert',$alert);
-        }else{
-            $in = false;
-            if($id){
-                $up = array(
-                    'NamaGroup' => $groupuser,
-                    'updated_at' => date('Y_m-d H:i:s'),
-                    'updated_by' => session('session')['user_nik']
-                );
-                $in = MasterGroupModel::where('KodeGroupUser',$id)->update($up);
-                $mesage = 'Group User Berhasil Diperbarui';
+            $check = MasterGroupModel::where('NamaGroup','LIKE','%'.$groupuser.'%')->first();
+            if($check){
+                $alert = ['title' => 'Gagal','message' => 'Nama Sudah Ada !','status' => 'warning'];
+                return redirect()->back()->with('alert',$alert);
             }else{
-                $lastdata = MasterGroupModel::orderBy('KodeGroupUser', 'desc')->first();
-                $format = '000';
-                $lastid = substr($lastdata->KodeGroupUser, 1) + 1;
-                $kdgroupuser = 'G' . substr($format, strlen($lastid)) . $lastid;
-                $up = array(
-                    'KodeGroupUser' => $kdgroupuser,
-                    'NamaGroup' => $groupuser,
-                    'created_at' => date('Y_m-d H:i:s'),
-                    'created_by' => session('session')['user_nik']
-                );
-                $in = MasterGroupModel::insert($up);
-                $mesage = 'Group User Berhasil Disimpan';
+                $in = false;
+                if($id){
+                    $up = array(
+                        'NamaGroup' => $groupuser,
+                        'updated_at' => date('Y_m-d H:i:s'),
+                        'updated_by' => session('session')['user_nik']
+                    );
+                    $in = MasterGroupModel::where('KodeGroupUser',$id)->update($up);
+                    $mesage = 'Group User Berhasil Diperbarui';
+                }else{
+                    $lastdata = MasterGroupModel::orderBy('KodeGroupUser', 'desc')->first();
+                    $format = '000';
+                    $lastid = substr($lastdata->KodeGroupUser, 1) + 1;
+                    $kdgroupuser = 'G' . substr($format, strlen($lastid)) . $lastid;
+                    $up = array(
+                        'KodeGroupUser' => $kdgroupuser,
+                        'NamaGroup' => $groupuser,
+                        'created_at' => date('Y_m-d H:i:s'),
+                        'created_by' => session('session')['user_nik']
+                    );
+                    $in = MasterGroupModel::insert($up);
+                    $mesage = 'Group User Berhasil Disimpan';
+                }
+                if($in){
+                    $alert = ['title' => 'Berhasil','message' => $mesage,'status' => 'success'];
+                }else{
+                    $alert = ['title' => 'Gagal','message' => 'Group User Gagal Ditambahkan','status' => 'error'];
+                }
+                return redirect()->back()->with('alert',$alert);
             }
-            if($in){
-                $alert = ['title' => 'Berhasil','message' => $mesage,'status' => 'success'];
-            }else{
-                $alert = ['title' => 'Gagal','message' => 'Group User Gagal Ditambahkan','status' => 'error'];
-            }
-            return redirect()->back()->with('alert',$alert);
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_GROUP_SAVE_FAIL]', 'Gagal menyimpan group user.', 'Gagal Simpan Group User.', $post);
         }
     }
 
@@ -840,52 +863,46 @@ class SettingController extends Controller
 
     function StorePrivilege(Request $request, $params)
     {
-        $decrypted = decrypt($params);
-        $master = MasterGroupModel::where('KodeGroupUser',$decrypted)->first();
         DB::beginTransaction();
+        try {
+            $decrypted = decrypt($params);
+            $master = MasterGroupModel::where('KodeGroupUser',$decrypted)->first();
 
-        $del = GroupUserModel::where('KodeGroupUser',$decrypted)->delete();
-        $moduldata = ModulModel::where('MenuAktif','Y')->orderBy(DB::raw('modul, menu','alias'))->select('modul','menu')->get();
-        // dd($moduldata);
-        foreach ($moduldata as $key => $value) {
-            $cari = $value->modul.$value->menu;
-            // dd($cari);
-            if(isset($request->menumod[$cari]) AND $request->actionmod[$cari]!=null){
-                echo $request->menumod[$cari].' vs '.$request->actionmod[$cari].'<br>';
-                $mod = explode("#", $request->menumod[$cari]);
+            $del = GroupUserModel::where('KodeGroupUser',$decrypted)->delete();
+            $moduldata = ModulModel::where('MenuAktif','Y')->orderBy(DB::raw('modul, menu','alias'))->select('modul','menu')->get();
+            // dd($moduldata);
+            foreach ($moduldata as $key => $value) {
+                $cari = $value->modul.$value->menu;
+                // dd($cari);
+                if(isset($request->menumod[$cari]) AND $request->actionmod[$cari]!=null){
+                    echo $request->menumod[$cari].' vs '.$request->actionmod[$cari].'<br>';
+                    $mod = explode("#", $request->menumod[$cari]);
 
-                $inn = array(
-                    'KodeGroupUser'=>$decrypted,
-                    'Modul'=>$mod[0],
-                    'Menu'=>$mod[1],
-                    'FullAkses'=>$request->actionmod[$cari],
-                    'created_at'=>date('Y-m-d H:i:s'),
-                    'created_by'=>session('session')['user_nik']
-                );
-                // dd($inn);
-                $in = GroupUserModel::insert($inn);
-                if(!$in){
-                    $gagal[] = 'ok';
+                    $inn = array(
+                        'KodeGroupUser'=>$decrypted,
+                        'Modul'=>$mod[0],
+                        'Menu'=>$mod[1],
+                        'FullAkses'=>$request->actionmod[$cari],
+                        'created_at'=>date('Y-m-d H:i:s'),
+                        'created_by'=>session('session')['user_nik']
+                    );
+                    // dd($inn);
+                    $in = GroupUserModel::insert($inn);
+                    if(!$in){
+                        throw new \Exception("Gagal menyimpan privilege.");
+                    }
                 }
             }
-        }
-        if(empty($gagal)){
-                DB::commit();
+            DB::commit();
             return redirect(route('gruopuser.show'))->with('alert', [
                 'title' => 'Success!',
                 'message' => 'Data Has Been Saved Successfully!',
                 'status' => 'success'
             ]);
-
-        }else{
+        } catch (\Exception $e) {
             DB::rollBack();
-            return redirect(route('gruopuser.show'))->with('alert', [
-                'title' => 'Error!',
-                'message' => 'Data Failed Saved!',
-                'status' => 'error'
-            ]);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PRIV_STORE_FAIL]', 'Gagal menyimpan privilege.', 'Gagal Simpan Privilege.', $request);
         }
-
     }
     //END Group User
 

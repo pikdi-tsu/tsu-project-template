@@ -3,14 +3,12 @@
 namespace Modules\System\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class PermissionController extends MiddlewareController
 {
@@ -51,9 +49,12 @@ class PermissionController extends MiddlewareController
             'name' => ['required', Rule::unique(config('app.table.permissions'), 'name')->where('guard_name', 'web')]
         ]);
 
-        Permission::create(['name' => $request->name, 'guard_name' => 'web']);
-
-        return back()->with('success', 'Permission baru berhasil dibuat!');
+        try {
+            Permission::create(['name' => $request->name, 'guard_name' => 'web']);
+            return back()->with('success', 'Permission baru berhasil dibuat!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PERM_STORE_FAIL]', 'Gagal menyimpan permission baru.', 'Gagal Create Permission.', $request);
+        }
     }
 
     public function edit($id)
@@ -79,24 +80,29 @@ class PermissionController extends MiddlewareController
     {
         $this->guard('edit', 'system:permission');
 
-        $permission = Permission::query()->findOrFail($id);
-
         $request->validate([
             'name' => ['required', Rule::unique(config('app.table.permissions'), 'name')->ignore($id)->where('guard_name', 'web')]
         ]);
 
-        $permission->update(['name' => $request->name]);
-
-        return back()->with('success', 'Nama Permission berhasil diperbarui!');
+        try {
+            $permission = Permission::query()->findOrFail($id);
+            $permission->update(['name' => $request->name]);
+            return back()->with('success', 'Nama Permission berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PERM_UPDATE_FAIL]', 'Gagal memperbarui permission.', "Gagal Update Permission ID: $id.", $request);
+        }
     }
 
     public function destroy($id)
     {
         $this->guard('delete', 'system:permission');
 
-        $permission = Permission::query()->findOrFail($id);
-        $permission->delete();
-
-        return back()->with('success', 'Permission berhasil dihapus!');
+        try {
+            $permission = Permission::query()->findOrFail($id);
+            $permission->delete();
+            return back()->with('success', 'Permission berhasil dihapus!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_PERM_DELETE_FAIL]', 'Gagal menghapus permission.', "Gagal Hapus Permission ID: $id.");
+        }
     }
 }
