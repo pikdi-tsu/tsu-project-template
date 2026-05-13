@@ -3,8 +3,8 @@
 namespace Modules\System\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Modules\System\Models\MenuSidebar;
 use Spatie\Permission\Models\Permission;
@@ -182,18 +182,21 @@ class MenuController extends MiddlewareController
             'order' => 'required|integer',
         ]);
 
-        MenuSidebar::query()->create([
-            'name'            => $request->name,
-            'icon'            => $request->icon ?: 'fas fa-box',
-            'route'           => $request->route,
-            'permission_name' => $request->permission_name,
-            'parent_id'       => $request->parent_id,
-            'order'           => $request->order,
-            'isactive'        => $request->has('isactive') ? 1 : 0,
-        ]);
+        try {
+            MenuSidebar::query()->create([
+                'name'            => $request->name,
+                'icon'            => $request->icon ?: 'fas fa-box',
+                'route'           => $request->route,
+                'permission_name' => $request->permission_name,
+                'parent_id'       => $request->parent_id,
+                'order'           => $request->order,
+                'isactive'        => $request->has('isactive') ? 1 : 0,
+            ]);
 
-        // Redirect Back saja (halaman gak pindah, cuma reload)
-        return back()->with('success', 'Menu berhasil dibuat!');
+            return back()->with('success', 'Menu berhasil dibuat!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_MENU_STORE_FAIL]', 'Gagal menyimpan data menu baru.', 'Gagal Create Menu.', $request);
+        }
     }
 
     public function edit($id)
@@ -216,69 +219,77 @@ class MenuController extends MiddlewareController
 
         $menu = MenuSidebar::query()->findOrFail($id);
 
-        $menu->update([
-            'name'            => $request->name,
-            'icon'            => $request->icon,
-            'route'           => $request->route,
-            'permission_name' => $request->permission_name,
-            'parent_id'       => $request->parent_id,
-            'order'           => $request->order,
-            'isactive'        => $request->has('isactive') ? 1 : 0,
-        ]);
+        try {
+            $menu->update([
+                'name'            => $request->name,
+                'icon'            => $request->icon,
+                'route'           => $request->route,
+                'permission_name' => $request->permission_name,
+                'parent_id'       => $request->parent_id,
+                'order'           => $request->order,
+                'isactive'        => $request->has('isactive') ? 1 : 0,
+            ]);
 
-        return back()->with('success', 'Menu berhasil diupdate!');
+            return back()->with('success', 'Menu berhasil diupdate!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_MENU_UPDATE_FAIL]', 'Gagal memperbarui data menu.', "Gagal Update Menu ID: $id.", $request);
+        }
     }
 
     public function destroy($id)
     {
         $this->guard('delete', 'system:menu');
 
-        $menu = MenuSidebar::withCount('children')->findOrFail($id);
+        try {
+            $menu = MenuSidebar::withCount('children')->findOrFail($id);
 
-        if ($menu->children_count > 0) {
-            return redirect()->back()->with('error',
-                '<b>Gagal Menghapus!</b>
+            if ($menu->children_count > 0) {
+                return redirect()->back()->with('error',
+                    '<b>Gagal Menghapus!</b>
                 <br>Menu ini masih memiliki
                 <b>'.$menu->children_count.' Sub-Menu</b>di dalamnya.
                 <br>Silakan hapus atau pindahkan sub-menu terlebih dahulu.'
-            );
-        }
-
-        if (!empty($menu->permission_name)) {
-            // Cek Permission
-            $permissionExists = Permission::query()->where('name', $menu->permission_name)->exists();
-
-            if ($permissionExists) {
-                $linkPermission = route('system.permission.index', ['search' => $menu->permission_name]);
-
-                return redirect()->back()->with('error',
-                    '<b>Gagal Menghapus!</b><br>'.
-                    'Menu ini masih terikat dengan Permission: <b>'.$menu->permission_name.'</b>.<br><br>'.
-                    'Demi keamanan data, Anda wajib menghapus data Permission-nya terlebih dahulu sebelum menghapus Menu ini.<br><br>'.
-                    '<a href="'.$linkPermission.'" class="btn btn-danger btn-xs text-white shadow-sm">'.
-                    '<i class="fas fa-arrow-right"></i> Hapus Permission Disini'.
-                    '</a>'
                 );
             }
 
-            // Cek Penggunaan di Role (Active Usage)
-            $permission = Permission::query()->where('name', $menu->permission_name)->first();
+            if (!empty($menu->permission_name)) {
+                // Cek Permission
+                $permissionExists = Permission::query()->where('name', $menu->permission_name)->exists();
 
-            if ($permission) {
-                $usedByRoles = $permission->roles()->count();
+                if ($permissionExists) {
+                    $linkPermission = route('system.permission.index', ['search' => $menu->permission_name]);
 
-                if ($usedByRoles > 0) {
                     return redirect()->back()->with('error',
                         '<b>Gagal Menghapus!</b><br>'.
-                        'Permission menu ini (<b>'.$menu->permission_name.'</b>) sedang aktif digunakan oleh <b>'.$usedByRoles.' Role</b>.<br>'.
-                        'Silakan uncheck/cabut akses permission ini dari Role terkait di Manajemen Role terlebih dahulu.'
+                        'Menu ini masih terikat dengan Permission: <b>'.$menu->permission_name.'</b>.<br><br>'.
+                        'Demi keamanan data, Anda wajib menghapus data Permission-nya terlebih dahulu sebelum menghapus Menu ini.<br><br>'.
+                        '<a href="'.$linkPermission.'" class="btn btn-danger btn-xs text-white shadow-sm">'.
+                        '<i class="fas fa-arrow-right"></i> Hapus Permission Disini'.
+                        '</a>'
                     );
                 }
+
+                // Cek Penggunaan di Role (Active Usage)
+                $permission = Permission::query()->where('name', $menu->permission_name)->first();
+
+                if ($permission) {
+                    $usedByRoles = $permission->roles()->count();
+
+                    if ($usedByRoles > 0) {
+                        return redirect()->back()->with('error',
+                            '<b>Gagal Menghapus!</b><br>'.
+                            'Permission menu ini (<b>'.$menu->permission_name.'</b>) sedang aktif digunakan oleh <b>'.$usedByRoles.' Role</b>.<br>'.
+                            'Silakan uncheck/cabut akses permission ini dari Role terkait di Manajemen Role terlebih dahulu.'
+                        );
+                    }
+                }
             }
+
+            $menu->delete();
+
+            return redirect()->route('system.menu.index')->with('success', 'Menu berhasil dihapus!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_MENU_DELETE_FAIL]', 'Gagal menghapus data menu.', "Gagal Hapus Menu ID: $id.");
         }
-
-        $menu->delete();
-
-        return redirect()->route('system.menu.index')->with('success', 'Menu berhasil dihapus!');
     }
 }

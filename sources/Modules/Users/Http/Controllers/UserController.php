@@ -3,9 +3,8 @@
 namespace Modules\Users\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
-use App\Models\DataDosenTendik;
-use App\Models\DataMahasiswa;
 use App\Models\User;
+use App\Services\TsuErrorHandlerService;
 use App\Services\UserSyncService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -62,8 +61,16 @@ class UserController extends MiddlewareController
                     return '<div class="text-center"><span class="badge badge-success shadow-sm"><i class="fas fa-circle text-white" style="font-size: 8px; vertical-align: middle;"></i> Sedang Online</span></div>';
                 }
 
+                $userRoles = $row->roles->pluck('name')->toJson();
+                $editUrl = route('users.user.edit', $row->id);
                 $deleteUrl = route('users.user.destroy', $row->id);
                 $token = csrf_token();
+
+                $btnEdit = '<button type="button" class="btn btn-sm btn-primary shadow-sm mr-1 btn-edit"
+                                data-url="'.$editUrl.'"
+                                title="Atur Role Aplikasi">
+                                <i class="fas fa-user-tag mr-1"></i> Pasang Role
+                            </button>';
 
                 $btnDelete = '
                                 <form action="'.$deleteUrl.'" method="POST" style="display:inline-block; margin: 0;">
@@ -75,7 +82,7 @@ class UserController extends MiddlewareController
                                 </form>
                             ';
 
-                return '<div class="text-center">' . $btnDelete . '</div>';
+                return '<div class="text-center" style="white-space: nowrap;">' . $btnEdit . $btnDelete . '</div>';
             })
             ->rawColumns(['avatar', 'roles', 'action'])
             ->make(true);
@@ -85,120 +92,64 @@ class UserController extends MiddlewareController
     {
         $this->guard('create', 'users:user');
 
-        $homebaseUrl  = config('app.tsu_homebase.url');
-        $clientId     = config('app.oauth.client.id');
-        $clientSecret = config('app.oauth.client.secret');
-
         try {
-            // Access Token Client Credential
-            try {
-                // Hapus without verifying saat production
-                $responseToken = Http::withoutVerifying()->post($homebaseUrl . '/oauth/token', [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'scope' => '', // Sesuaikan jika ada scope khusus
-                ]);
-            } catch (ConnectionException $e) {
-                Log::error("[TSU_CONN_REFUSED] ClientID: ". $clientId, [
-                    'message' => $e->getMessage(),
-                    'file'    => $e->getFile(),
-                    'line'    => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                throw new \Exception("[TSU_CONN_REFUSED] Tidak dapat menghubungi Server Homebase. Cek koneksi internet.");
-            }
+            $homebaseUrl  = config('app.tsu_homebase.url');
+            $clientId     = config('app.oauth.client.id');
+            $clientSecret = config('app.oauth.client.secret');
 
-            // Error Response (Client ID Salah / Secret Salah)
+            // Access Token Client Credential
+            $responseToken = Http::withoutVerifying()->post($homebaseUrl . '/oauth/token', [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'scope' => '', // Sesuaikan jika ada scope khusus
+            ]);
+
             if ($responseToken->failed()) {
-                $status = $responseToken->status();
-                throw new \Exception("[TSU_AUTH_FAIL] Gagal Otorisasi Client (Status: $status). Cek Client ID/Secret.");
+                throw new \Exception("[TSU_AUTH_FAIL] Gagal Otorisasi Client (Status: {$responseToken->status()}). Cek Client ID/Secret.");
             }
 
             $accessToken = $responseToken->json()['access_token'];
-
             if (!$accessToken) {
                 throw new \Exception("[TSU_TOKEN_EMPTY] Respon token dari Homebase kosong.");
             }
 
             // TARIK DATA USER (Pakai Bearer Token)
             $apiUrl = $homebaseUrl . '/api/v1/users/sync';
+            $stats = ['processed' => 0, 'updated' => 0, 'uptodate' => 0, 'failed' => 0];
 
-            // Variable Counter
-            $stats = [
-                'processed' => 0,
-                'updated'   => 0,
-                'uptodate'  => 0,
-                'failed'    => 0,
-            ];
+            User::query()->whereNotNull('email')->chunk(50, function ($users) use ($apiUrl, $accessToken, $syncer, &$stats) {
+                $emailList = $users->pluck('email')->toArray();
+                try {
+                    $response = Http::withoutVerifying()->withToken($accessToken)->withHeaders(['Accept' => 'application/json'])->timeout(30)->post($apiUrl, ['emails' => $emailList]);
 
-            // Chunking Process (Looping User Lokal)
-            User::query()
-                ->whereNotNull('email')
-                ->chunk(50, function ($users) use ($apiUrl, $accessToken, $syncer, &$stats) {
-
-                    // Ambil daftar email user
-                    $emailList = $users->pluck('email')->toArray();
-
-                    // Request Update  (POST)
-                    try {
-                        $response = Http::withoutVerifying()
-                            ->withToken($accessToken)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->timeout(30)
-                            ->post($apiUrl, [
-                                'emails' => $emailList
-                            ]);
-
-                        if ($response->successful()) {
-                            $apiResult = $response->json();
-                            $usersData = $apiResult['data'] ?? [];
-
-                            // UPDATE DATA LOKAL
-                            foreach ($usersData as $userData) {
-                                try {
-                                    // Call user sync service
-                                    $result = $syncer->handle($userData, null, true);
-
-                                    // Cek status affected
-                                    $stats['processed']++;
-                                    if ($result['affected'] === true) {
-                                        $stats['updated']++;
-                                    } else {
-                                        $stats['uptodate']++;
-                                    }
-                                } catch (\Exception $e) {
-                                    // Log error per user
-                                    $stats['failed']++;
-                                    Log::error("[TSU_USER_SKIP] Gagal proses user: " . ($userData['email'] ?? 'Unknown'), [
-                                        'error_msg' => $e->getMessage(),
-                                        'file' => $e->getFile(),
-                                        'line' => $e->getLine()
-                                    ]);
+                    if ($response->successful()) {
+                        $usersData = $response->json()['data'] ?? [];
+                        foreach ($usersData as $userData) {
+                            try {
+                                $result = $syncer->handle($userData, null, true);
+                                $stats['processed']++;
+                                if ($result['affected'] === true) {
+                                    $stats['updated']++;
+                                } else {
+                                    $stats['uptodate']++;
                                 }
+                            } catch (\Exception $e) {
+                                $stats['failed']++;
+                                Log::error("[TSU_USER_SKIP] Gagal proses user: " . ($userData['email'] ?? 'Unknown'), ['error_msg' => $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]);
                             }
-                        } else {
-                            // Log error request batch API
-                            $stats['failed'] += count($emailList);
-                            Log::error("[TSU_BATCH_API_ERR] Gagal Sync Batch: ", [
-                                'status_code' => $response->status(),
-                                'response_body' => $response->body(),
-                                'target_emails' => $emailList
-                            ]);
                         }
-                    } catch (\Exception $e) {
-                        // Log koneksi error request batch
+                    } else {
                         $stats['failed'] += count($emailList);
-                        Log::error("[TSU_BATCH_CONN_ERR] Koneksi Error Saat Sync Batch: ", [
-                            'error' => $e->getMessage(),
-                            'emails' => $emailList
-                        ]);
+                        Log::error("[TSU_BATCH_API_ERR] Gagal Sync Batch: ", ['status_code' => $response->status(), 'response_body' => $response->body(), 'target_emails' => $emailList]);
                     }
+                } catch (\Exception $e) {
+                    $stats['failed'] += count($emailList);
+                    Log::error("[TSU_BATCH_CONN_ERR] Koneksi Error Saat Sync Batch: ", ['error' => $e->getMessage(), 'emails' => $emailList]);
+                }
+                return true;
+            });
 
-                    return true;
-                });
-
-            // Error Total
             if ($stats['processed'] === 0 && $stats['failed'] > 0) {
                 throw new \Exception("[TSU_SYNC_ZERO] Sinkronisasi gagal total. Tidak ada data yang berhasil diambil.");
             }
@@ -206,21 +157,16 @@ class UserController extends MiddlewareController
             // LAPORAN
             $msg = "<h6 class='font-weight-bold mb-2'>Laporan Sinkronisasi User</h6>";
             $msg .= "<ul class='mb-0 pl-3' style='list-style-type: disc;'>";
-
             $msg .= "<li>Total user diperiksa: <b>{$stats['processed']}</b></li>";
-
             if ($stats['updated'] > 0) {
                 $msg .= "<li>Data diperbarui: <b>{$stats['updated']}</b> user</li>";
             }
-
             if ($stats['uptodate'] > 0) {
                 $msg .= "<li>Data up to date: {$stats['uptodate']} user</li>";
             }
-
             if ($stats['failed'] > 0) {
                 $msg .= "<li class='text-danger font-weight-bold'>Gagal diproses: {$stats['failed']} user (Cek Log)</li>";
             }
-
             $msg .= "</ul>";
 
             if ($stats['failed'] > 0 && $stats['processed'] === 0) {
@@ -228,33 +174,13 @@ class UserController extends MiddlewareController
             }
 
             return back()->with('success', $msg);
+
         } catch (\Exception $e) {
-            // LOG ERROR (Global)
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_SYS_CRITICAL]";
-            $userMsg    = "Terjadi kesalahan sistem yang tidak terduga.";
-
-            // Cek throw error message
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = str_replace($errorCode, '', $rawMessage);
-            } else {
-                $userMsg = "Terjadi gangguan teknis internal.";
+            $defaultError = 'Terjadi kesalahan sistem yang tidak terduga.';
+            if ($e instanceof ConnectionException) {
+                $defaultError = 'Tidak dapat menghubungi Server Homebase. Cek koneksi internet.';
             }
-
-            Log::error("$errorCode Gagal Sync User.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            $finalErrorMsg = "<div class='text-center'>";
-            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
-            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
-            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
-            $finalErrorMsg .= "</div>";
-
-            return redirect()->back()->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_SYS_CRITICAL]', $defaultError, 'Gagal Sync User.');
         }
     }
 
@@ -262,151 +188,40 @@ class UserController extends MiddlewareController
     {
         $this->guard('edit', 'users:user');
 
-        $title = 'Edit User';
-        $user = User::with(['roles', 'dosenTendik', 'mahasiswa'])->findOrFail($id);
-        $roles = Role::pluck('name', 'name')->all();
-        $userRole = $user->roles->pluck('name')->toArray();
+        $user = User::with('roles')->findOrFail($id);
 
-        // Cek apakah User SSO?
-        $isSso = !is_null($user->sso_id);
+        // Ambil Role Lokal
+        $allRoles = Role::where('is_identity', 0)->pluck('name', 'name')->all();
 
-        $formConfig = [];
+        // Default selected ambil Role Lokal user
+        $userRoles = $user->roles()->where('is_identity', 0)->pluck('name')->toArray();
 
-        if ($user->hasRole('mahasiswa')) {
-            $formConfig = DataMahasiswa::getFormConfig();
-        } elseif ($user->hasRole(['dosen', 'tendik'])) {
-            $formConfig = DataDosenTendik::getFormConfig();
-        }
-
-        return view('users::user.edit', compact('title', 'user', 'roles', 'userRole', 'isSso', 'formConfig'));
+        return view('users::user._modal_pasang_role', compact('user', 'allRoles', 'userRoles'));
     }
 
     public function update(Request $request, $id)
     {
-        // Gunakan findOrFail biar aman
-        $user = User::findOrFail($id);
+        $request->validate([
+            'roles' => 'nullable|array',
+        ]);
 
-        // 1. VALIDASI: CUKUP ROLES (Data Akun di-skip)
-        // Kita tidak perlu validasi name/email karena tidak akan di-update.
-        $rules = [
-            'roles' => 'required|array',
-        ];
-
-        // Validasi Profil Tambahan (Tetap Ada)
-        // Ingat logic validasi dinamis kita sebelumnya? Masih kita pakai.
-        if ($user->hasRole('mahasiswa')) {
-            $rules = array_merge($rules, [
-                'nik_ktp' => 'numeric|nullable',
-                'tempat_lahir' => 'string|nullable',
-                'tgl_lahir' => 'date|nullable',
-                'jenis_kelamin' => 'string|nullable',
-                'agama' => 'string|nullable',
-                'no_hp' => 'numeric|nullable',
-                'email_pribadi' => 'string|nullable',
-                'nama_ayah' => 'string|nullable',
-                'nama_ibu' => 'string|nullable',
-                'no_hp_ortu' => 'numeric|nullable',
-                'alamat_lengkap' => 'string|nullable',
-            ]);
-        } elseif ($user->hasRole(['dosen', 'tendik'])) {
-            $rules = array_merge($rules, [
-                'nidn' => 'string|max:20|nullable',
-                'nip' => 'string|max:20|nullable',
-                'gelar_depan' => 'string|nullable',
-                'gelar_belakang' => 'string|nullable',
-                'jabatan_fungsional' => 'string|nullable',
-                'nik_ktp'  => 'string|nullable',
-                'tempat_lahir'  => 'string|nullable',
-                'tgl_lahir'  => 'date|nullable',
-                'jenis_kelamin'  => 'string|nullable',
-                'no_hp' => 'numeric|nullable',
-                'alamat_domisili' => 'string|nullable',
-            ]);
-        }
-
-        $request->validate($rules);
-
-        DB::beginTransaction();
         try {
-            // Update Status Aktif
-//            if (auth()->id() !== $user->id) {
-//                $user->isactive = $request->has('isactive');
-//                $user->save();
-//            }
+            $user = User::findOrFail($id);
 
-            // Update Roles
-            $user->syncRoles($request->roles);
+            // Protect Role Global user
+            $globalRoles = $user->roles()->where('is_identity', 1)->pluck('name')->toArray();
 
-            // Update Profil (MULTI-PROFIL LOGIC)
-            if ($user->hasRole(['dosen', 'tendik'])) {
-                DataDosenTendik::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'nidn' => $request->nidn,
-                        'nip'  => $request->nip,
-                        'gelar_depan' => $request->gelar_depan,
-                        'gelar_belakang' => $request->gelar_belakang,
-                        'jabatan_fungsional' => $request->jabatan_fungsional,
-                        'nik_ktp' => $request->nik_ktp,
-                        'tempat_lahir' => $request->tempat_lahir,
-                        'tgl_lahir' => $request->tgl_lahir,
-                        'jenis_kelamin' => $request->jenis_kelamin,
-                        'no_hp' => $request->no_hp,
-                        'alamat_domisili' => $request->alamat_domisili,
-                    ]
-                );
-            } elseif ($user->hasRole('mahasiswa')) {
-                DataMahasiswa::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'nim' => $request->nim,
-                        'nik_ktp' => $request->nik_ktp,
-                        'tempat_lahir' => $request->tempat_lahir,
-                        'tgl_lahir' => $request->tgl_lahir,
-                        'jenis_kelamin' => $request->jenis_kelamin,
-                        'agama' => $request->agama,
-                        'no_hp' => $request->no_hp,
-                        'email_pribadi' => $request->email_pribadi,
-                        'nama_ayah' => $request->nama_ayah,
-                        'nama_ibu' => $request->nama_ibu,
-                        'no_hp_ortu' => $request->no_hp_ortu,
-                        'alamat_lengkap' => $request->alamat_lengkap,
-                    ]
-                );
-            }
+            // Ambil Role Lokal submit form modal
+            $submittedLocalRoles = $request->roles ?? [];
 
-            DB::commit();
-            return redirect()->back()->with('success', 'Hak Akses & Data Profil berhasil diperbarui.');
+            // Merge Role global dan lokal
+            $finalRolesToSync = array_merge($globalRoles, $submittedLocalRoles);
+
+            $user->syncRoles($finalRolesToSync);
+
+            return redirect()->back()->with('success', 'Role lokal untuk user ' . $user->name . ' berhasil diperbarui.');
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Log update profile failed
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_UPD_FAIL]";
-            $userMsg    = "Gagal menyimpan perubahan data.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = trim(str_replace($errorCode, '', $rawMessage));
-            } else {
-                $userMsg = "Terjadi gangguan teknis internal saat menyimpan data.";
-            }
-
-            // Log Asli
-            Log::error("$errorCode Gagal Update User ID: $id", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            // HTML Formatted Message
-            $finalErrorMsg = "<div class='text-center'>";
-            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
-            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
-            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
-            $finalErrorMsg .= "</div>";
-
-            return redirect()->back()->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_UPD_FAIL]', 'Gagal menyimpan perubahan data.', "Gagal Update User ID: $id", $request);
         }
     }
 
@@ -415,14 +230,18 @@ class UserController extends MiddlewareController
     {
         $this->guard('delete', 'users:user');
 
-        $user = User::query()->findOrFail($id);
+        try {
+            $user = User::query()->findOrFail($id);
 
-        // Proteksi Tambahan: Jangan hapus diri sendiri
-        if(auth()->id() === $id){
-            return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+            // Proteksi Tambahan: Jangan hapus diri sendiri
+            if(auth()->id() == $id){
+                return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+            }
+
+            $user->delete();
+            return back()->with('success', 'User berhasil dikeluarkan dari modul ini!');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_USER_DELETE_FAIL]', 'Gagal menghapus user.', "Gagal Hapus User ID: $id");
         }
-
-        $user->delete();
-        return back()->with('success', 'User berhasil dikeluarkan dari modul ini!');
     }
 }

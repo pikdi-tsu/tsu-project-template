@@ -170,7 +170,7 @@
 
                                 {{-- TAB 1: UPDATE FOTO --}}
                                 <div class="active tab-pane" id="foto_profil">
-                                    <form action="{{route('profile.save.change-profile')}}" class="form-horizontal" method="POST" id="form-profile" enctype="multipart/form-data">
+                                    <form action="{{route('users.profile.save.change-profile')}}" class="form-horizontal" method="POST" id="form-profile" enctype="multipart/form-data">
                                         @csrf
 
                                         <div class="callout callout-info">
@@ -237,7 +237,7 @@
 
                                 {{-- TAB 2: GANTI PASSWORD --}}
                                 <div class="tab-pane" id="security">
-                                    <form class="form-horizontal" action="{{ route('profile.update-password') }}" method="POST">
+                                    <form class="form-horizontal" action="{{ route('users.profile.update-password') }}" method="POST">
                                         @csrf
                                         @method('PUT')
 

@@ -23,6 +23,11 @@ class PermissionSeeder extends Seeder
             'users:user:edit',         // Edit user
             'users:user:delete',       // Delete user
 
+            'admin:data-karyawan:view',         // View data-karyawan
+            'admin:data-karyawan:create',       // Create data-karyawan
+            'admin:data-karyawan:edit',         // Edit data-karyawan
+            'admin:data-karyawan:delete',       // Delete data-karyawan
+
             'system:role:view',         // View role
             'system:role:create',       // Create role
             'system:role:edit',         // Edit role
@@ -43,6 +48,10 @@ class PermissionSeeder extends Seeder
             'users:user:view',         // View user
             'users:user:edit',         // Edit user
             'users:user:delete',       // Delete user
+            'admin:data-karyawan:view', // View data-karyawan
+            'admin:data-karyawan:create', // Create data-karyawan
+            'admin:data-karyawan:edit', // Edit data-karyawan
+            'admin:data-karyawan:delete', // Non-aktif data-karyawan
             'system:role:view',         // View role
             'system:role:edit',         // Edit role
             'system:permission:view',   // View permission

@@ -4,8 +4,8 @@ namespace Modules\Admin\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
 use App\Models\DataDosenTendik;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class DataKaryawanController extends MiddlewareController
@@ -169,29 +169,7 @@ class DataKaryawanController extends MiddlewareController
 
             return back()->with('success', 'Data karyawan berhasil ditambahkan!');
         } catch (\Exception $e) {
-            // Error Handling ala PIKDI TSU
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_KARYAWAN_STORE_FAIL]";
-            $userMsg    = "Gagal menyimpan data karyawan baru.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = trim(str_replace($errorCode, '', $rawMessage));
-            }
-
-            Log::error("$errorCode Gagal Create Karyawan.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            $finalErrorMsg = "<div class='text-center'>
-                                <h4 class='text-bold text-danger mb-2'>$errorCode</h4>
-                                <p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>
-                                <p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>
-                              </div>";
-
-            return back()->withInput($request->all())->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_STORE_FAIL]', 'Gagal menyimpan data karyawan baru.', 'Gagal Create Karyawan.', $request);
         }
     }
 
@@ -236,29 +214,7 @@ class DataKaryawanController extends MiddlewareController
 
             return back()->with('success', 'Data karyawan berhasil diperbarui!');
         } catch (\Exception $e) {
-            // Error Handling ala PIKDI TSU
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_KARYAWAN_UPD_FAIL]";
-            $userMsg    = "Gagal menyimpan perubahan data karyawan.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = trim(str_replace($errorCode, '', $rawMessage));
-            }
-
-            Log::error("$errorCode Gagal Update Karyawan ID: $id.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            $finalErrorMsg = "<div class='text-center'>
-                                <h4 class='text-bold text-danger mb-2'>$errorCode</h4>
-                                <p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>
-                                <p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>
-                              </div>";
-
-            return back()->withInput($request->all())->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_UPD_FAIL]', 'Gagal menyimpan perubahan data karyawan.', "Gagal Update Karyawan ID: $id.", $request);
         }
     }
 
@@ -277,8 +233,7 @@ class DataKaryawanController extends MiddlewareController
             ]);
             return back()->with('success', 'Data karyawan berhasil dinonaktifkan.');
         } catch (\Exception $e) {
-            Log::error("[TSU_KARYAWAN_DEL_FAIL] Gagal Nonaktifkan ID: $id. Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal menonaktifkan data karyawan.');
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_DEL_FAIL]', 'Gagal menonaktifkan data karyawan.', "Gagal Nonaktifkan ID: $id.");
         }
     }
 
@@ -296,8 +251,7 @@ class DataKaryawanController extends MiddlewareController
             ]);
             return back()->with('success', 'Mantap! Data karyawan berhasil diaktifkan kembali.');
         } catch (\Exception $e) {
-            Log::error("[TSU_KARYAWAN_ACT_FAIL] Gagal Aktifkan ID: $id. Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal mengaktifkan kembali data karyawan.');
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_ACT_FAIL]', 'Gagal mengaktifkan kembali data karyawan.', "Gagal Aktifkan ID: $id.");
         }
     }
 }
