@@ -8,8 +8,8 @@ use Modules\System\Http\Controllers\LoginController;
 use Modules\System\Http\Controllers\MenuController;
 use Modules\System\Http\Controllers\PermissionController;
 use Modules\System\Http\Controllers\RoleController;
-use Modules\Users\Http\Controllers\UserController;
-use Modules\Users\Http\Controllers\UserProfileController;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +64,18 @@ Route::prefix('')->group(function() {
                 Route::get('menu/json', [MenuController::class, 'datatable'])->name('menu.json');
                 Route::resource('menu', MenuController::class);
             });
+
+        });
+        
+        // Custom Route View File
+        Route::middleware(['auth'])->get('/storage/lembur/bukti/{filename}', function ($filename) {
+            $path = storage_path('app/public/lembur/bukti/' . $filename);
+            
+            if (!File::exists($path)) {
+                abort(404);
+            }
+            
+            return Response::file($path);
         });
 
         // Profile & Password
