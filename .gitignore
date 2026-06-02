@@ -24,6 +24,13 @@ sources/auth.json
 sources/vendor
 sources/node_modules
 
+# > Laravel Modules Dependencies & Builds
+sources/Modules/*/node_modules/
+sources/Modules/*/vendor/
+sources/Modules/*/public/build/
+sources/Modules/*/public/hot
+sources/Modules/*/.env
+
 # > Kunci Rahasia SSO/Passport
 sources/storage/*.key
 sources/storage/oauth-*.key
