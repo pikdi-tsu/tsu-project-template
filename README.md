@@ -67,15 +67,20 @@ Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal Anda:
 
 1. **Clone & Install Dependencies**
 
-    Pastikan menjalankan dump-autoload agar namespace kustom pada folder `sources/` terbaca.
+    Karena struktur *core* Laravel berada di dalam folder `sources/`, semua perintah instalasi dan `artisan` **wajib** dijalankan di dalam folder tersebut.
    ```bash
-   git clone <repository_url_proyek_baru>
+   git clone <repository_url_proyek> tsu-project-template
+   cd tsu-project-template/sources
    composer install atau composer update
    ```
 
 2. **Penyesuaian Environment (Wajib Diperhatikan!)**
    
-    Salin `.env.example` menjadi `.env`. Buka file `.env` dan **wajib** sesuaikan kelompok variabel krusial berikut agar aplikasi dan fitur SSO berjalan lancar di *local* Anda:
+    Pastikan Anda masih berada di dalam direktori `sources/`. Salin `.env.example` menjadi `.env` dengan menjalankan perintah berikut:
+    ```bash
+    cp .env.example .env
+    ```
+    Setelah itu, buka file `.env` dan **wajib** sesuaikan kelompok variabel krusial berikut agar aplikasi dan fitur SSO berjalan lancar di *local* Anda:
 
    **🔹 Core & Database**
    - `APP_NAME`: Nama proyek baru (Contoh: "TSU Template").
@@ -100,22 +105,25 @@ Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal Anda:
 
 
 3. **Generate Key & Clear Cache**
+    *(Pastikan masih di dalam direktori `sources/`)*
    ```bash
    php artisan key:generate
    php artisan config:clear
    ```
 
 4. **Setup Database & Modules**
-   Pastikan Anda sudah membuat database kosong. Aktifkan modul dan jalankan migrasi beserta seeder-nya.
+   Pastikan Anda sudah membuat database kosong. Aktifkan modul dan jalankan migrasi beserta seeder-nya. *(Pastikan masih di dalam direktori `sources/`)*
    ```bash
    php artisan module:enable Admin Users System
    php artisan migrate --seed
    ```
 
 5. **Menjalankan Aplikasi**
-   ```bash
-   php artisan serve atau lewat url dari laragon [nama_proyek].test
-   ```
+   
+   Karena *entry point* (`index.php`) berada di luar direktori `sources/`, disarankan untuk **mengakses aplikasi langsung melalui Laragon** (misal: `http://[nama_proyek].test`).
+   
+   > [!WARNING]
+   > Menjalankan `php artisan serve` dari dalam direktori `sources/` mungkin tidak akan berjalan dengan baik tanpa penyesuaian khusus pada konfigurasi *server* lokal Anda.
 
 ## 📝 Catatan Pengembang
 
