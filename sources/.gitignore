@@ -44,3 +44,11 @@ Thumbs.db
 *.sql
 *.zip
 *.tar.gz
+
+# --- LARAVEL MODULES (MODULAR MONOLITH) ---
+# Ignore dependencies or builds that might be generated per-module
+Modules/*/node_modules/
+Modules/*/vendor/
+Modules/*/public/build/
+Modules/*/public/hot
+Modules/*/.env

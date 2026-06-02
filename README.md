@@ -49,27 +49,67 @@ Proyek ini dikembangkan dengan peta jalan (roadmap) teknis sebagai berikut:
 
 ## ⚙️ Panduan Instalasi
 
-Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal:
-1. Clone & Install Dependencies Pastikan menjalankan dump-autoload agar namespace kustom pada folder sources/ terbaca.
-```bash
-git clone <repository_url>
-composer install
-composer dump-autoload
-```
-2. Konfigurasi Environment Salin file konfigurasi dan atur kredensial database (MySQL/Oracle).
-```bash
-cp .env.example .env
-php artisan key:generate
-```
-3. Setup Database & Modules Pastikan modul diaktifkan dan migrasi dijalankan.
-```bash
-php artisan module:enable Admin Users System
-php artisan migrate --seed
-```
-4. Menjalankan Aplikasi
-```bash
- php artisan serve
-```
+Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal Anda:
+
+1. **Clone & Install Dependencies**
+
+    Karena struktur *core* Laravel berada di dalam folder `sources/`, semua perintah instalasi dan `artisan` **wajib** dijalankan di dalam folder tersebut.
+   ```bash
+   git clone <repository_url_proyek> tsu-project-template
+   cd <nama_folder_proyek>/sources
+   composer install atau composer update
+   ```
+
+2. **Penyesuaian Environment (Wajib Diperhatikan!)**
+   
+    Pastikan Anda masih berada di dalam direktori `sources/`. Salin `.env.example` menjadi `.env` dengan menjalankan perintah berikut:
+    ```bash
+    cp .env.example .env
+    ```
+    Setelah itu, buka file `.env` dan **wajib** sesuaikan kelompok variabel krusial berikut agar aplikasi dan fitur SSO berjalan lancar di *local* Anda:
+
+   **🔹 Core & Database**
+   - `APP_NAME`: Nama proyek baru (Contoh: "TSU Template").
+   - `APP_URL`: URL lokal proyek baru (Contoh: "http://tsu-template.test").
+   - `SESSION_COOKIE`: Ubah spesifik per proyek (Contoh: "template_session"). *Penting agar sesi login tidak bentrok dengan aplikasi TSU lain di browser.*
+   - `DB_*`: Masukkan kredensial koneksi dan nama database lokal. 
+
+   **🔹 Arsitektur Modular (Otomatisasi Prefix)**
+   - `MODULE_FULL_NAME`: Nama lengkap proyek, huruf kecil & underscore (Contoh: "tsu_template").
+   - `MODULE_NAME`: Prefix untuk tabel Spatie, huruf kecil (Contoh: "template").
+   - `TABLE_NAME`: Kosongkan jadi `""` jika ingin menggunakan nama tabel bawaan, atau isi eksplisit.
+
+   **🔹 Integrasi SSO & API (Homebase TSU)**
+   - `TSU_SSO_CLIENT_ID` & `SECRET`: Kredensial SSO dari TSU Homebase.
+   - `TSU_SSO_REDIRECT_URI`: Sesuaikan URL callback dengan URL lokal Anda (Contoh: "http://tsu-template.test/login/sso/callback").
+   - `HOMEBASE_CLIENT_ID` & `SECRET`: Kredensial untuk jalur komunikasi API antar layanan.
+
+   **🔹 Keamanan & Hak Akses Khusus**
+   - `PIKDI_EMERGENCY_SECRET` & `RESCUE_SECRET`: Kunci rahasia untuk otorisasi *bypass/login* darurat tim PIKDI.
+   - `APP_ALLOWED_ROLES`: Batasi role yang boleh mengakses aplikasi (Contoh: "dosen,tendik"). Kosongkan jika semua sivitas akademika diizinkan masuk.
+   - `GMAPS_KEY`: Isi jika modul Anda menggunakan fitur pemetaan/lokasi.
+
+
+3. **Generate Key & Clear Cache**
+    *(Pastikan masih di dalam direktori `sources/`)*
+   ```bash
+   php artisan key:generate
+   php artisan config:clear
+   ```
+
+4. **Setup Database & Modules**
+   Pastikan Anda sudah membuat database kosong. Aktifkan modul dan jalankan migrasi beserta seeder-nya. *(Pastikan masih di dalam direktori `sources/`)*
+   ```bash
+   php artisan module:enable Admin Users System
+   php artisan migrate --seed
+   ```
+
+5. **Menjalankan Aplikasi**
+   
+   Karena *entry point* (`index.php`) berada di luar direktori `sources/`, disarankan untuk **mengakses aplikasi langsung melalui Laragon** (misal: `http://[nama_proyek].test`).
+   
+   > [!WARNING]
+   > Menjalankan `php artisan serve` dari dalam direktori `sources/` mungkin tidak akan berjalan dengan baik tanpa penyesuaian khusus pada konfigurasi *server* lokal Anda.
 
 ## 📝 Catatan Pengembang
 
