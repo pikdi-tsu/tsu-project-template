@@ -10,6 +10,12 @@ class HomeController extends Controller
 {
     public function index()
     {
-        return view('system::halamanutama/index');
+        $projectName = strtoupper(config('app.module.name'));
+
+        $data = array(
+            'project_name' => $projectName,
+        );
+
+        return view('system::halamanutama/index', $data);
     }
 }

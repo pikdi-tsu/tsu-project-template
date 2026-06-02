@@ -19,25 +19,26 @@ root/
 ├── sources/            # Direktori Utama Logika Aplikasi
 │   ├── app/            # Logika Global (Shared Controllers, Models, Helpers)
 │   └── Modules/        # Domain-Driven Modules
-│       ├── Admin/      # Modul khusus manajemen Administrator & Konfigurasi
-│       ├── System/     # Modul pengaturan sistem inti
-│       └── Users/      # Modul manajemen pengguna (Dosen, Tendik, Mahasiswa)
+│       ├── Admin/      # Modul operasional Administrator (Dashboard, Master Data)
+│       ├── System/     # Modul Core Engine (Auth, Spatie ACL, Dynamic Menus, Global Settings)
+│       └── Users/      # Modul entitas pengguna (Manajemen Akun & Profil Dosen/Tendik/Mahasiswa)
 ```
 
-Implementasi ini menggunakan pola nwidart/laravel-modules untuk memastikan setiap domain bisnis terisolasi dengan baik.
+Implementasi ini menggunakan pola `nwidart/laravel-modules` untuk memastikan setiap domain bisnis terisolasi dengan baik.
 
 ## 🛠️ Spesifikasi Teknis (Tech Stack)
 
-- Framework Core: Laravel
-- Architecture Pattern: Modular Monolith
-- Database Interface: Eloquent ORM & yajra/laravel-datatables-oracle (Support MySQL & Oracle)
-- Authentication: Custom Local Authentication (Session-based)
-    - Pemisahan logika login untuk user internal (Dosen/Tendik) dan user eksternal (Mahasiswa).
-- Frontend Stack:
-    - Blade Templating Engine
-    - Bootstrap 4 Ecosystem
-    - AdminLTE Assets & Custom Components
-    - Libraries: Select2, Summernote, SweetAlert2, Chart.js
+- **Framework Core**: Laravel
+- **Architecture Pattern**: Modular Monolith
+- **Database Interface**: Eloquent ORM & `yajra/laravel-datatables-oracle` (Support MySQL & Oracle)
+- **Authentication & Authorization**:
+  - Custom Local Authentication (Session-based) dengan pemisahan logika user internal/eksternal.
+  - `spatie/laravel-permission` untuk Role & Permission Management (dengan custom dynamic table prefix).
+- **Frontend Stack**:
+  - Blade Templating Engine
+  - Bootstrap 4 Ecosystem
+  - AdminLTE Assets & Custom Components
+  - Libraries: Select2, Summernote, SweetAlert2, Chart.js
 
 ## 🛣️ Roadmap Pengembangan
 
@@ -47,26 +48,34 @@ Proyek ini dikembangkan dengan peta jalan (roadmap) teknis sebagai berikut:
 2. Phase 2: Refactoring Service Layer untuk persiapan abstraksi data.
 3. Phase 3: Transisi ke Arsitektur berbasis API (Headless Readiness).
 
-## ⚙️ Panduan Instalasi
+---
+
+## 🚀 Panduan Memulai Proyek Baru (Khusus Tech Lead / Inisiator)
+
+Membuat aplikasi baru menggunakan template ini, ikuti alur berikut:
+
+1. **Gunakan Template Ini**
+   Klik tombol hijau **"Use this template"** -> **"Create a new repository"** di Github. Beri nama repository sesuai proyek baru Anda (misal: `tsu-pendaftaran`).
+2. **Setup Awal Repository**
+   Clone repository baru tersebut, sesuaikan nama aplikasi pada file `composer.json` atau referensi lain jika perlu, lalu beritahu tim Anda untuk meng-clone repository proyek yang baru.
+
+---
+
+## ⚙️ Panduan Instalasi & Setup Standar (Untuk Tim Developer)
 
 Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal Anda:
 
 1. **Clone & Install Dependencies**
 
-    Karena struktur *core* Laravel berada di dalam folder `sources/`, semua perintah instalasi dan `artisan` **wajib** dijalankan di dalam folder tersebut.
+    Pastikan menjalankan dump-autoload agar namespace kustom pada folder `sources/` terbaca.
    ```bash
-   git clone <repository_url_proyek> tsu-project-template
-   cd <nama_folder_proyek>/sources
+   git clone <repository_url_proyek_baru>
    composer install atau composer update
    ```
 
 2. **Penyesuaian Environment (Wajib Diperhatikan!)**
    
-    Pastikan Anda masih berada di dalam direktori `sources/`. Salin `.env.example` menjadi `.env` dengan menjalankan perintah berikut:
-    ```bash
-    cp .env.example .env
-    ```
-    Setelah itu, buka file `.env` dan **wajib** sesuaikan kelompok variabel krusial berikut agar aplikasi dan fitur SSO berjalan lancar di *local* Anda:
+    Salin `.env.example` menjadi `.env`. Buka file `.env` dan **wajib** sesuaikan kelompok variabel krusial berikut agar aplikasi dan fitur SSO berjalan lancar di *local* Anda:
 
    **🔹 Core & Database**
    - `APP_NAME`: Nama proyek baru (Contoh: "TSU Template").
@@ -91,31 +100,31 @@ Ikuti langkah berikut untuk mengatur lingkungan pengembangan lokal Anda:
 
 
 3. **Generate Key & Clear Cache**
-    *(Pastikan masih di dalam direktori `sources/`)*
    ```bash
    php artisan key:generate
    php artisan config:clear
    ```
 
 4. **Setup Database & Modules**
-   Pastikan Anda sudah membuat database kosong. Aktifkan modul dan jalankan migrasi beserta seeder-nya. *(Pastikan masih di dalam direktori `sources/`)*
+   Pastikan Anda sudah membuat database kosong. Aktifkan modul dan jalankan migrasi beserta seeder-nya.
    ```bash
    php artisan module:enable Admin Users System
    php artisan migrate --seed
    ```
 
 5. **Menjalankan Aplikasi**
-   
-   Karena *entry point* (`index.php`) berada di luar direktori `sources/`, disarankan untuk **mengakses aplikasi langsung melalui Laragon** (misal: `http://[nama_proyek].test`).
-   
-   > [!WARNING]
-   > Menjalankan `php artisan serve` dari dalam direktori `sources/` mungkin tidak akan berjalan dengan baik tanpa penyesuaian khusus pada konfigurasi *server* lokal Anda.
+   ```bash
+   php artisan serve atau lewat url dari laragon [nama_proyek].test
+   ```
 
 ## 📝 Catatan Pengembang
 
-- Namespace: Semua logika inti berada di bawah namespace App\ (untuk sources/app) dan Modules\ (untuk sources/Modules).
-- Assets: Aset publik dikelola secara manual di public/assets dan public/assetsku. Pastikan path aset di file Blade mengarah ke direktori yang benar.
+- **Namespace**: Semua logika inti berada di bawah namespace `App\` (untuk `sources/app`) dan `Modules\` (untuk `sources/Modules`).
+- **Assets**: Aset publik dikelola secara manual di `public/assets` dan `public/assetsku`. Pastikan path aset di file Blade mengarah ke direktori yang benar.
 
 ---
 
-<div style="text-align: center; font-weight: bold"> Pusat Informasi, Komunikasi dan Digital (PIKDI) <br> Tiga Serangkai University </div>
+<div align="center">
+  <strong>Pusat Informasi, Komunikasi dan Digital (PIKDI)</strong><br>
+  Tiga Serangkai University
+</div>

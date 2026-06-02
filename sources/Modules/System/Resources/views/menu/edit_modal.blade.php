@@ -31,7 +31,7 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Route Laravel</label>
-                    <input type="text" name="route" id="edit_route" class="form-control" value="{{ $menu->route }}" placeholder="system.users.index">
+                    <input type="text" name="route" id="edit_route" class="form-control" value="{{ $menu->route }}" placeholder="users.users.index">
                     <small class="text-muted">Isi <code>#</code> atau kosongkan jika ini menu Parent (Dropdown).</small>
                 </div>
             </div>

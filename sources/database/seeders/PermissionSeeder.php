@@ -18,10 +18,15 @@ class PermissionSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $systemPermissions = [
-            'system:user:view',         // View user
-            'system:user:create',       // Create user
-            'system:user:edit',         // Edit user
-            'system:user:delete',       // Delete user
+            'users:user:view',         // View user
+            'users:user:create',       // Create user
+            'users:user:edit',         // Edit user
+            'users:user:delete',       // Delete user
+
+            'admin:data-karyawan:view',         // View data-karyawan
+            'admin:data-karyawan:create',       // Create data-karyawan
+            'admin:data-karyawan:edit',         // Edit data-karyawan
+            'admin:data-karyawan:delete',       // Delete data-karyawan
 
             'system:role:view',         // View role
             'system:role:create',       // Create role
@@ -40,9 +45,13 @@ class PermissionSeeder extends Seeder
         ];
 
         $adminPermissions = [
-            'system:user:view',         // View user
-            'system:user:edit',         // Edit user
-            'system:user:delete',       // Delete user
+            'users:user:view',         // View user
+            'users:user:edit',         // Edit user
+            'users:user:delete',       // Delete user
+            'admin:data-karyawan:view', // View data-karyawan
+            'admin:data-karyawan:create', // Create data-karyawan
+            'admin:data-karyawan:edit', // Edit data-karyawan
+            'admin:data-karyawan:delete', // Non-aktif data-karyawan
             'system:role:view',         // View role
             'system:role:edit',         // Edit role
             'system:permission:view',   // View permission

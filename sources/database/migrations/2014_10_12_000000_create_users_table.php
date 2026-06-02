@@ -13,7 +13,7 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        $tableName = config('auth.providers.users.table', 'users');
+        $tableName = config('app.table.users');
 
         Schema::create($tableName, static function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -52,6 +52,8 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(config('auth.providers.users.table'));
+        $tableName = config('app.table.users');
+
+        Schema::dropIfExists($tableName);
     }
 }

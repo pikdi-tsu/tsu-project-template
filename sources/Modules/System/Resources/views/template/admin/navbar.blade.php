@@ -63,7 +63,7 @@
                     <form action="{{route('logout')}}" method="POST" id="form-logout">
                         @csrf
                     </form>
-                    <a href="{{route('profile.index')}}" class="btn btn-primary">Profile</a>
+                    <a href="{{route('users.profile.index')}}" class="btn btn-primary">Profile</a>
                     <button type="submit" class="btn btn-danger float-right" form="form-logout" style="background-color: red;">Sign out</button>
                 </li>
             </ul>

@@ -1,4 +1,4 @@
-@extends('system::template/admin/header')
+@extends('system::template.admin.header')
 @section('title', $title)
 @section('link_href')
 
@@ -14,7 +14,7 @@
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item active"><a href="{{route('dashboard')}}">Dashboard</a></li>
+                        <li class="breadcrumb-item active"><a href="{{route('admin.dashboard')}}">Dashboard</a></li>
                         {{-- <li class="breadcrumb-item active">Starter Page</li> --}}
                     </ol>
                 </div>
@@ -45,7 +45,7 @@
 @endsection
 @section('script')
     <script>
-        $(function() {
+        $(function () {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

@@ -13,7 +13,7 @@ class MiddlewareController extends BaseController
 
     /**
      * Fungsi Middleware permission di controller
-     * @param string $prefix (Contoh: 'system:user', 'siakad:krs')
+     * @param string $prefix (Contoh: 'users:user', 'siakad:krs')
      */
     protected function registerPermissions(string $prefix): void
     {
@@ -83,6 +83,7 @@ class MiddlewareController extends BaseController
                 // Modal AJAX (Tag <button>)
                 $btn .= '<button type="button"
                             data-id="' . $row->id . '"
+                            data-name="' . $row->name . '"
                             data-url="' . $url . '"
                             class="btn btn-warning btn-sm ' . $opt['edit_class'] . ' mr-1"
                             title="Edit Data">

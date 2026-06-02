@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Users\Http\Controllers\MahasiswaController;
 use Modules\Users\Http\Controllers\PegawaiController;
+use Modules\Users\Http\Controllers\UserController;
+use Modules\Users\Http\Controllers\UserProfileController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,19 +17,18 @@ use Modules\Users\Http\Controllers\PegawaiController;
 |
 */
 
-Route::prefix('users')->group(function () {
-    Route::middleware(['web'])->group(function () {
-        //Data Mahasiswa
-        Route::prefix('mahasiswa')->group(function () {
-            Route::get('/', [MahasiswaController::class, 'index'])->name('home.mahasiswa');
-            Route::get('/listmahasiswa', [MahasiswaController::class, 'table_mahasiswa'])->name('home.listmahasiswa');
-        });
+Route::prefix('users')->name('users.')->middleware(['auth'])->group(function () {
+    // User
+    Route::middleware(['permission:users:user:view'])->group(function() {
+        Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
+        Route::post('user/sync', [UserController::class, 'sync'])->name('user.sync'); // Route Sync
+        Route::resource('user', UserController::class);
+    });
 
-        //Data Dosen
-        Route::prefix('dosen')->group(function () {
-            Route::get('/', [PegawaiController::class, 'index'])->name('home.dosen');
-            Route::get('/listpegawai', [PegawaiController::class, 'table_pegawai'])->name('home.listpegawai');
-        });
+    // Profile & Password
+    Route::prefix('profile')->middleware(['auth'])->name('profile.')->group(function() {
+        Route::get('/', [UserProfileController::class, 'index'])->name('index');
+        Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('save.change-profile');
+        Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])->name('update-password');
     });
 });
-
