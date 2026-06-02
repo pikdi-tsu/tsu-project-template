@@ -3,17 +3,16 @@
 namespace Modules\System\Http\Controllers;
 
 use App\Http\Controllers\MiddlewareController;
+use App\Services\TsuErrorHandlerService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Http;
-use DB;
 
 class RoleController extends MiddlewareController
 {
@@ -122,151 +121,101 @@ class RoleController extends MiddlewareController
 
     public function sync()
     {
-        // Cek permission user
         $this->guard('create', 'system:role');
 
         try {
-            $baseUrl = config('app.tsu_homebase.url');
-            $clientId = config('app.oauth.client.id');
-            $clientSecret = config('app.oauth.client.secret');
+            $result = DB::transaction(function () {
+                $baseUrl = config('app.tsu_homebase.url');
+                $clientId = config('app.oauth.client.id');
+                $clientSecret = config('app.oauth.client.secret');
 
-            // Ambil Token (Client Credentials)
-            try {
+                // Ambil Token (Client Credentials)
                 $tokenResponse = Http::withoutVerifying()->asForm()->post($baseUrl . '/oauth/token', [
                     'grant_type'    => 'client_credentials',
                     'client_id'     => $clientId,
                     'client_secret' => $clientSecret,
                     'scope'         => '',
                 ]);
-            } catch (ConnectionException $e) {
-                throw new \Exception("[TSU_CONN_REFUSED] Gagal menghubungi Server Homebase. Cek koneksi internet.");
-            }
 
-            if ($tokenResponse->failed()) {
-                return back()->with('error', '[TSU_AUTH_FAIL] Gagal Otorisasi ke Homebase! Cek Client ID/Secret.');
-            }
+                if ($tokenResponse->failed()) {
+                    throw new \Exception('[TSU_AUTH_FAIL] Gagal Otorisasi ke Homebase! Cek Client ID/Secret.');
+                }
 
-            $accessToken = $tokenResponse->json()['access_token'];
+                $accessToken = $tokenResponse->json()['access_token'];
 
-            if (!$accessToken) {
-                throw new \Exception("[TSU_TOKEN_EMPTY] Respon token dari Homebase kosong.");
-            }
+                if (!$accessToken) {
+                    throw new \Exception("[TSU_TOKEN_EMPTY] Respon token dari Homebase kosong.");
+                }
 
-            // Ambil Data Role
-            try {
+                // Ambil Data Role
                 $dataResponse = Http::withoutVerifying()
                     ->withToken($accessToken)
                     ->timeout(10) // Jangan lama-lama nunggu
                     ->get($baseUrl . '/api/v1/roles/sync-list');
-            } catch (ConnectionException $e) {
-                throw new \Exception("[TSU_API_TIMEOUT] Koneksi terputus saat mengambil data Role.");
-            }
 
-            if ($dataResponse->failed()) {
-                throw new \Exception("[TSU_API_ERR] Gagal mengambil data Role. Status: " . $dataResponse->status());
-            }
+                if ($dataResponse->failed()) {
+                    throw new \Exception("[TSU_API_ERR] Gagal mengambil data Role. Status: " . $dataResponse->status());
+                }
 
-            // Proses dataa filterr️
-            $rolesFromHomebase = $dataResponse->json()['data'];
+                $rolesFromHomebase = $dataResponse->json()['data'];
 
+                if (empty($rolesFromHomebase) || !is_array($rolesFromHomebase)) {
+                    throw new \Exception("[TSU_DATA_INVALID] Data dari Homebase Kosong atau Format Salah!");
+                }
 
-            // Validasi payload kosong
-            if (empty($rolesFromHomebase) || !is_array($rolesFromHomebase)) {
-                throw new \Exception("[TSU_DATA_INVALID] Data dari Homebase Kosong atau Format Salah!");
-            }
+                $addedCount = 0;
+                $validGlobalRoles = [];
 
-            DB::beginTransaction();
+                foreach ($rolesFromHomebase as $item) {
+                    $rName = is_array($item) ? ($item['name'] ?? null) : $item;
+                    $isIdentity = is_array($item) && (($item['is_identity'] ?? false));
 
-            $addedCount = 0;
-            $validGlobalRoles = [];
-
-            foreach ($rolesFromHomebase as $item) {
-                // Deteksi format (Array Object atau String biasa)
-                $rName = is_array($item) ? ($item['name'] ?? null) : $item;
-                $isIdentity = is_array($item) && (($item['is_identity'] ?? false));
-
-                if ($rName) {
-                    $nameLower = strtolower($rName);
-
-                    // Filter Role Identitas
-                    if ($isIdentity) {
-                        $validGlobalRoles[] = $nameLower;
-
-                        $role = Role::updateOrCreate(
-                            ['name' => $nameLower, 'guard_name' => 'web'],
-                            ['is_identity' => true]
-                        );
-
-                        if ($role->wasRecentlyCreated) {
-                            $addedCount++;
+                    if ($rName) {
+                        $nameLower = strtolower($rName);
+                        if ($isIdentity) {
+                            $validGlobalRoles[] = $nameLower;
+                            $role = Role::updateOrCreate(
+                                ['name' => $nameLower, 'guard_name' => 'web'],
+                                ['is_identity' => true]
+                            );
+                            if ($role->wasRecentlyCreated) {
+                                $addedCount++;
+                            }
                         }
                     }
                 }
-            }
 
-            // Logic cleanup role lama dari Homebase dan protect role lokal
-            $deletedCount = Role::query()
-                ->where('guard_name', 'web')
-                ->where('is_identity', true)
-                ->whereNotIn('name', $validGlobalRoles)
-                ->delete();
+                $deletedCount = Role::query()
+                    ->where('guard_name', 'web')
+                    ->where('is_identity', true)
+                    ->whereNotIn('name', $validGlobalRoles)
+                    ->delete();
 
-            DB::commit();
+                return ['added' => $addedCount, 'deleted' => $deletedCount];
+            });
 
             // Notif Settings
             $msg = "<h6 class='font-weight-bold mb-2'>Sinkronisasi Roles Selesai!</h6>";
             $msg .= "<ul class='mb-0 pl-3' style='list-style-type: disc;'>";
-
-            if ($addedCount > 0) {
-                $msg .= "<li><b>+$addedCount</b> Role Global Baru ditambahkan.</li>";
+            if ($result['added'] > 0) {
+                $msg .= "<li><b>+{$result['added']}</b> Role Global Baru ditambahkan.</li>";
             }
-
-            if ($deletedCount > 0) {
-                $msg .= "<li><b>-$deletedCount</b> Role Global Usang dihapus.</li>";
+            if ($result['deleted'] > 0) {
+                $msg .= "<li><b>-{$result['deleted']}</b> Role Global Usang dihapus.</li>";
             }
-
-            if ($addedCount === 0 && $deletedCount === 0) {
+            if ($result['added'] === 0 && $result['deleted'] === 0) {
                 $msg .= "<li>Data Role Global sudah <b>Up-to-Date</b>.</li>";
             }
             $msg .= "</ul>";
 
             return back()->with('success', $msg);
+
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Log gagal sync role
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_ROLE_CRITICAL]"; // Default Code
-            $userMsg    = "Terjadi kesalahan sistem saat sinkronisasi Role.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = str_replace($errorCode, '', $rawMessage);
-            } else {
-                // Masking Error Codingan Asli
-                $userMsg = "Terjadi gangguan teknis internal.";
+            $defaultError = 'Terjadi kesalahan sistem saat sinkronisasi Role.';
+            if ($e instanceof ConnectionException) {
+                $defaultError = 'Gagal menghubungi Server Homebase. Cek koneksi internet.';
             }
-
-            Log::error("$errorCode Gagal Sync Role.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            // Error koneksi internet/server mati
-            if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
-                return back()->with('error', 'Gagal menghubungi Server Homebase. Kemungkinan server pusat sedang down atau gangguan jaringan.');
-            }
-
-            // Feedback User
-            $finalErrorMsg = "<div class='text-center'>";
-            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
-            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
-            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
-            $finalErrorMsg .= "</div>";
-
-            // Error Default
-            return back()->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_ROLE_CRITICAL]', $defaultError, 'Gagal Sync Role.');
         }
     }
 
@@ -288,67 +237,31 @@ class RoleController extends MiddlewareController
 
     public function store(Request $request)
     {
-        $this->guard('create', 'system:role');
+        $this->guardStore($request->id, 'system:role');
 
-        $roleTable = config('auth.providers.users.table') . '_roles';
-
-        // Validasi
         $request->validate([
-            'name'        => 'required|string|max:50|unique:'.$roleTable.',name',
+            'name'        => 'required|string|max:50|unique:'.config('app.table.roles').',name',
             'permissions' => 'array'
         ]);
 
-        DB::beginTransaction();
         try {
-            // Buat Role Baru
-            $role = Role::create([
-                'name'        => strtolower($request->name),
-                'guard_name'  => 'web',
-                'is_identity' => false
-            ]);
+            DB::transaction(function () use ($request) {
+                $role = Role::create([
+                    'name'        => strtolower($request->name),
+                    'guard_name'  => 'web',
+                    'is_identity' => false
+                ]);
 
-            // Sync Permissions
-            $permissions = $request->permissions ?? [];
-            $role->syncPermissions($permissions);
+                $permissions = $request->permissions ?? [];
+                $role->syncPermissions($permissions);
 
-            // Reset Cache
-            app()[PermissionRegistrar::class]->forgetCachedPermissions();
+                app()[PermissionRegistrar::class]->forgetCachedPermissions();
+            });
 
-            DB::commit();
             return back()->with('success', 'Role lokal baru berhasil dibuat!');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Handler error
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_ROLE_STORE_FAIL]";
-            $userMsg    = "Gagal menyimpan role baru.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = trim(str_replace($errorCode, '', $rawMessage));
-            } else {
-                $userMsg = "Terjadi gangguan teknis internal saat membuat role.";
-            }
-
-            // Log Asli untuk Developer
-            Log::error("$errorCode Gagal Create Role.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            // HTML Formatted Message untuk User
-            $finalErrorMsg = "<div class='text-center'>";
-            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
-            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
-            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
-            $finalErrorMsg .= "</div>";
-
-            return back()
-                ->withInput($request->all())
-                ->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_ROLE_STORE_FAIL]', 'Gagal menyimpan role baru.', 'Gagal Create Role.', $request);
         }
     }
 
@@ -376,97 +289,57 @@ class RoleController extends MiddlewareController
         $this->guard('edit', 'system:role');
 
         $role = Role::query()->findOrFail($id);
-
-        // Cek database
         $isLocked = $role->is_identity;
 
-        // Validasi
         $rules = ['permissions' => 'array'];
-        $roleTable = config('auth.providers.users.table') . '_roles';
-
         if (!$isLocked) {
-            $rules['name'] = 'required|string|max:50|unique:'.$roleTable.',name,' . $id;
+            $rules['name'] = 'required|string|max:50|unique:'.config('app.table.roles').',name,' . $id;
         }
-
         $request->validate($rules);
 
-        DB::beginTransaction();
         try {
-            // Update Nama Role
-            if (!$isLocked) {
-                $role->name = strtolower($request->name);
-                $role->save();
-            }
+            DB::transaction(function () use ($request, $role, $isLocked) {
+                if (!$isLocked) {
+                    $role->name = strtolower($request->name);
+                    $role->save();
+                }
 
-            // Sync Permissions
-            $role->syncPermissions($request->permissions ?? []);
+                $role->syncPermissions($request->permissions ?? []);
+                app()[PermissionRegistrar::class]->forgetCachedPermissions();
+            });
 
-            app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-            DB::commit();
             return back()->with('success', 'Role berhasil diperbarui!');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Error Handling
-            $rawMessage = $e->getMessage();
-            $errorCode  = "[TSU_ROLE_UPD_FAIL]";
-            $userMsg    = "Gagal menyimpan perubahan role.";
-
-            if (preg_match('/\[TSU_.*?\]/', $rawMessage, $matches)) {
-                $errorCode = $matches[0];
-                $userMsg = trim(str_replace($errorCode, '', $rawMessage));
-            } else {
-                $userMsg = "Terjadi gangguan teknis internal saat memperbarui role.";
-            }
-
-            Log::error("$errorCode Gagal Update Role ID: $id.", [
-                'original_error' => $rawMessage,
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
-            $finalErrorMsg = "<div class='text-center'>";
-            $finalErrorMsg .= "<h4 class='text-bold text-danger mb-2'>$errorCode</h4>";
-            $finalErrorMsg .= "<p class='mb-2 text-bold' style='font-size: 1.1em;'>$userMsg</p>";
-            $finalErrorMsg .= "<p class='text-muted small mb-0'>Silakan screenshot pesan ini dan laporkan ke PIKDI jika masalah berlanjut.</p>";
-            $finalErrorMsg .= "</div>";
-
-            return back()
-                ->withInput($request->all())
-                ->with('error', $finalErrorMsg);
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_ROLE_UPD_FAIL]', 'Gagal menyimpan perubahan role.', "Gagal Update Role ID: $id.", $request);
         }
     }
 
     public function destroy($id)
     {
         $this->guard('delete', 'system:role');
-        $role = Role::findOrFail($id);
 
-        // Cek Super Admin
-        if (in_array($role->name, ['super admin', 'super admin ' . config('app.module.name')], true)) {
-            return back()->with('error', '[SYS_ERR] Super Admin tidak boleh dihapus.');
+        try {
+            $role = Role::findOrFail($id);
+
+            if (in_array($role->name, ['super admin', 'super admin ' . config('app.module.name')], true)) {
+                return back()->with('error', '[SYS_ERR] Super Admin tidak boleh dihapus.');
+            }
+
+            if ($role->name === 'admin ' . config('app.module.name')) {
+                return back()->with('error', '[TSU_PROTECTED] Role admin lokal tidak dapat dihapus dari sistem lokal.');
+            }
+
+            if ($role->is_identity) {
+                return back()->with('error', '[TSU_PROTECTED] Role Global (Homebase) tidak dapat dihapus dari sistem lokal.');
+            }
+
+            $role->delete();
+            app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return back()->with('success', 'Role Lokal berhasil dihapus.');
+        } catch (\Exception $e) {
+            return TsuErrorHandlerService::handleHtml($e, '[TSU_ROLE_DELETE_FAIL]', 'Gagal menghapus role.', "Gagal Hapus Role ID: $id.");
         }
-
-        // Cek admin lokal
-        if ($role->name === 'admin ' . config('app.module.name')) {
-            return back()->with('error', '[TSU_PROTECTED] Role admin lokal tidak dapat dihapus dari sistem lokal.');
-        }
-
-        // Cek Flag Identity dari Database
-        if ($role->is_identity) {
-            return back()->with('error', '[TSU_PROTECTED] Role Global (Homebase) tidak dapat dihapus dari sistem lokal.');
-        }
-
-        // Cek User
-//        if ($role->users()->count() > 0) {
-//            return back()->with('error', 'Gagal hapus! Masih ada user yang menggunakan role ini.');
-//        }
-
-        $role->delete();
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-        return back()->with('success', 'Role Lokal berhasil dihapus.');
     }
 }

@@ -48,7 +48,7 @@
 </style>
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="{{ route('dashboard') }}" class="brand-link">
+    <a href="{{ route('admin.dashboard') }}" class="brand-link">
         <img src="{{ asset('public/assetsku/img/logotsu.png') }}" alt="TSU Logo" class="brand-image"
              style="opacity: .8">
         <span class="brand-text font-weight-light" style="font-size: 18px;font-weight: bold;">Tiga Serangkai University</span>

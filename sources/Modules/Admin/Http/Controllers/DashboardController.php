@@ -1,13 +1,11 @@
 <?php
 
-namespace Modules\System\Http\Controllers;
+namespace Modules\Admin\Http\Controllers;
 
+use Crypt;
+use DB;
 use Illuminate\Routing\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Password;
-use \Illuminate\Support\Facades\Session, Crypt, DB;
+use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
@@ -29,6 +27,6 @@ class DashboardController extends Controller
             'menu'  => 'dashboard',
         );
 //         dd(session()->all());
-        return view('system::dashboard/dashboard', $data);
+        return view('admin::dashboard.dashboard', $data);
     }
 }

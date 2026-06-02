@@ -111,7 +111,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Route Laravel</label>
-                                    <input type="text" name="route" id="input_route" class="form-control" placeholder="system.users.index">
+                                    <input type="text" name="route" id="input_route" class="form-control" placeholder="users.users.index">
                                     <small class="text-muted">Isi <code>#</code> atau kosongkan jika ini menu Parent (Dropdown).</small>
                                 </div>
                             </div>
