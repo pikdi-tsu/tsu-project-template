@@ -10,7 +10,7 @@ class TsuErrorHandlerService
 {
     /**
      * Parse exception message to extract TSU error code and user message.
-     *
+     * 
      * @param Exception $e
      * @param string $defaultErrorCode
      * @param string $defaultUserMsg
@@ -36,7 +36,7 @@ class TsuErrorHandlerService
 
     /**
      * Handle error and return a redirect response with an HTML error message (used by standard blade views).
-     *
+     * 
      * @param Exception $e
      * @param string $defaultErrorCode
      * @param string $defaultUserMsg
@@ -49,7 +49,7 @@ class TsuErrorHandlerService
         list($errorCode, $userMsg, $rawMessage) = self::parseError($e, $defaultErrorCode, $defaultUserMsg);
 
         $logMsg = $logPrefix ? "$errorCode $logPrefix" : "$errorCode Gagal memproses permintaan.";
-
+        
         Log::error($logMsg, [
             'original_error' => $rawMessage,
             'file' => $e->getFile(),
@@ -63,7 +63,7 @@ class TsuErrorHandlerService
                           </div>";
 
         $response = back()->with('error', $finalErrorMsg);
-
+        
         if ($request) {
             $response = $response->withInput($request->all());
         }
@@ -73,7 +73,7 @@ class TsuErrorHandlerService
 
     /**
      * Handle error and return a JSON response (used by APIs and AJAX).
-     *
+     * 
      * @param Exception $e
      * @param string $defaultErrorCode
      * @param string $defaultUserMsg
@@ -85,7 +85,7 @@ class TsuErrorHandlerService
         list($errorCode, $userMsg, $rawMessage) = self::parseError($e, $defaultErrorCode, $defaultUserMsg);
 
         $logMsg = $logPrefix ? "$errorCode $logPrefix" : "$errorCode Gagal memproses permintaan AJAX.";
-
+        
         Log::error($logMsg, [
             'original_error' => $rawMessage,
             'file' => $e->getFile(),
@@ -93,10 +93,12 @@ class TsuErrorHandlerService
         ]);
 
         return response()->json([
-            'title'   => 'Error!',
-            'status'  => 'error',
-            'code'    => $errorCode,
-            'message' => $userMsg
+            'success' => false,
+            'message' => $userMsg,
+            'data'    => null,
+            'errors'  => [
+                'code' => $errorCode
+            ]
         ], 500);
     }
 }

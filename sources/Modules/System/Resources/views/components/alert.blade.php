@@ -1,3 +1,9 @@
+<div id="pikdi-alert-data" style="display: none;" 
+    data-success="{{ session('success') }}" 
+    data-warning="{{ session('warning') }}" 
+    data-error="{{ session('error') }}"
+    data-validation-errors="{{ json_encode($errors->all()) }}">
+</div>
 <script>
     // --- KONFIGURASI KONTAK PIKDI ---
     // Ubah link/text di sini agar berlaku global
@@ -114,6 +120,106 @@
         });
     }
 
+    // --- GLOBAL AJAX WRAPPER ---
+    // Menggantikan pemanggilan $.ajax() manual untuk otomatisasi SweetAlert & Response Standardization (Rule #10)
+    function pikdiAjax(options) {
+        let defaults = {
+            type: 'POST',
+            url: '',
+            data: {},
+            showLoading: true,
+            loadingText: 'Sedang Memproses...',
+            successMessage: null, // Jika null, ambil dari response.message
+            onSuccess: function(res) {},
+            onError: function(res, xhr) {}
+        };
+        
+        let settings = $.extend({}, defaults, options);
+        
+        let ajaxConfig = {
+            url: settings.url,
+            type: settings.type,
+            data: settings.data,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            beforeSend: function() {
+                if (settings.showLoading) {
+                    Swal.fire({
+                        title: settings.loadingText,
+                        allowEscapeKey: false,
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                }
+            },
+            success: function(response) {
+                // Rule #10: format response.success
+                if (response.success || response.status === 'success') { // Fallback to status === success for backward compatibility
+                    let msg = settings.successMessage || response.message || 'Proses berhasil dilakukan!';
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: msg,
+                        icon: 'success'
+                    }).then((result) => {
+                        settings.onSuccess(response);
+                    });
+                } else {
+                    let msg = response.message || 'Terjadi kesalahan sistem.';
+                    let errCode = (response.errors && response.errors.code) ? 'Kode: ' + response.errors.code : '';
+                    Swal.fire('Gagal!', msg + (errCode ? '<br><small>'+errCode+'</small>' : ''), 'error');
+                    settings.onError(response, null);
+                }
+            },
+            error: function(xhr, status, error) {
+                let res = xhr.responseJSON;
+                let msg = (res && res.message) ? res.message : error;
+                let errCode = (res && res.errors && res.errors.code) ? res.errors.code : '';
+                
+                if (xhr.status === 422) {
+                    if (res && res.errors && !res.errors.code) { // Validasi standar laravel
+                        let errorsObj = res.errors;
+                        msg = '<ul class="text-left mt-3 text-sm" style="font-size:0.9em">';
+                        for(let key in errorsObj) {
+                            if(typeof errorsObj[key] === 'string') {
+                                msg += '<li>' + errorsObj[key] + '</li>';
+                            } else if (Array.isArray(errorsObj[key])) {
+                                msg += '<li>' + errorsObj[key][0] + '</li>';
+                            }
+                        }
+                        msg += '</ul>';
+                        Swal.fire({
+                            title: 'Validasi Gagal!',
+                            html: msg,
+                            icon: 'warning'
+                        });
+                    } else {
+                        Swal.fire('Validasi Gagal!', msg, 'warning');
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Terjadi Kesalahan!',
+                        html: `<p>${msg}</p>` + (errCode ? `<p class="text-muted"><small>Kode: ${errCode}</small></p>` : ''),
+                        icon: 'error',
+                        footer: pikdiInfo.footer
+                    });
+                }
+                settings.onError(res, xhr);
+            }
+        };
+
+        // Otomatis deteksi FormData
+        if (settings.data instanceof FormData) {
+            ajaxConfig.processData = false;
+            ajaxConfig.contentType = false;
+        }
+
+        $.ajax(ajaxConfig);
+    }
+
     $(document).ready(function() {
         // 403 alert
         $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
@@ -133,57 +239,64 @@
             }
         });
 
+        let alertDataElement = document.getElementById('pikdi-alert-data');
+        let sessionSuccess = alertDataElement.getAttribute('data-success');
+        let sessionWarning = alertDataElement.getAttribute('data-warning');
+        let sessionError = alertDataElement.getAttribute('data-error');
+
         // Sukses Setup
-        @if(session('success'))
-        Toast.fire({
-            icon: 'success',
-            html: `{!! session('success') !!}`,
-            background: '#28a745', // Hijau
-            color: '#fff',         // Teks Putih
-            iconColor: 'white'     // Icon Putih
-        });
-        @endif
+        if (sessionSuccess) {
+            Toast.fire({
+                icon: 'success',
+                html: sessionSuccess,
+                background: '#28a745', // Hijau
+                color: '#fff',         // Teks Putih
+                iconColor: 'white'     // Icon Putih
+            });
+        }
 
         // Warning Setup
-        @if(session('warning'))
-        Toast.fire({
-            icon: 'warning',
-            html: `<div class="mb-2">{!! session('warning') !!}</div>` + pikdiInfo.html,
-            background: '#ffc107', // Kuning
-            color: '#000',
-            iconColor: 'white'
-        });
-        @endif
+        if (sessionWarning) {
+            Toast.fire({
+                icon: 'warning',
+                html: `<div class="mb-2">${sessionWarning}</div>` + pikdiInfo.html,
+                background: '#ffc107', // Kuning
+                color: '#000',
+                iconColor: 'white'
+            });
+        }
 
         // Error Setup
-        @if(session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Terjadi Kesalahan!',
-            html: `<p class="text-bold">{!! session('error') !!}</p>`,
-            footer: pikdiInfo.footer,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Tutup',
-            backdrop: `rgba(0,0,0,0.4) left top no-repeat`
-        });
-        @endif
+        if (sessionError) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Terjadi Kesalahan!',
+                html: `<p class="text-bold">${sessionError}</p>`,
+                footer: pikdiInfo.footer,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Tutup',
+                backdrop: `rgba(0,0,0,0.4) left top no-repeat`
+            });
+        }
 
         // Error validasi
-        @if($errors->any())
-        let errorMsg = '<ul class="text-left mt-3" style="font-size: 0.9em;">';
-        @foreach ($errors->all() as $error)
-            errorMsg += '<li>{!! $error !!}</li>';
-        @endforeach
+        let validationErrorsRaw = alertDataElement.getAttribute('data-validation-errors');
+        let validationErrors = validationErrorsRaw ? JSON.parse(validationErrorsRaw) : [];
+        if (validationErrors && validationErrors.length > 0) {
+            let errorMsg = '<ul class="text-left mt-3" style="font-size: 0.9em;">';
+            validationErrors.forEach(function(error) {
+                errorMsg += '<li>' + error + '</li>';
+            });
             errorMsg += '</ul>';
 
-        Swal.fire({
-            icon: 'warning',
-            title: 'Periksa Inputan Anda!',
-            html: errorMsg,
-            footer: '<span class="text-muted font-italic">Pastikan semua field bertanda bintang (*) terisi.</span>',
-            confirmButtonColor: '#f39c12',
-            confirmButtonText: 'OK, Saya Perbaiki'
-        });
-        @endif
+            Swal.fire({
+                icon: 'warning',
+                title: 'Periksa Inputan Anda!',
+                html: errorMsg,
+                footer: '<span class="text-muted font-italic">Pastikan semua field bertanda bintang (*) terisi.</span>',
+                confirmButtonColor: '#f39c12',
+                confirmButtonText: 'OK, Saya Perbaiki'
+            });
+        }
     });
 </script>
