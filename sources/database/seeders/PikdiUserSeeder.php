@@ -46,7 +46,7 @@ class PikdiUserSeeder extends Seeder
             ['user_id' => $pikdiUser->id],
             [
                 'nik'                => '999999', // Dummy NIK
-                'status_pegawai'     => 'TETAP',
+                'status_karyawan'    => 'TETAP',
                 'gelar_depan'        => '',
                 'gelar_belakang'     => '',
                 'jabatan_fungsional' => 'Super Admin IT',

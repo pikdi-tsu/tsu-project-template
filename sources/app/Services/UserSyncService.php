@@ -8,6 +8,7 @@ use App\Models\User;
 use Exception;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
+use App\Enums\StatusKaryawanEnum;
 
 class UserSyncService
 {
@@ -215,8 +216,24 @@ class UserSyncService
         if (!empty($data['nip'])) $updateData['nip'] = $data['nip'];
         if (!empty($data['gelar_depan'])) $updateData['gelar_depan'] = $data['gelar_depan'];
         if (!empty($data['gelar_belakang'])) $updateData['gelar_belakang'] = $data['gelar_belakang'];
+        
+        // Multi-jabatan dukungan (jika HRIS kirim array, jadikan comma-separated)
+        if (!empty($data['jabatan_struktural'])) {
+            $updateData['jabatan_struktural'] = is_array($data['jabatan_struktural']) 
+                ? implode(', ', $data['jabatan_struktural']) 
+                : $data['jabatan_struktural'];
+        }
+
         if (!empty($data['jabatan_fungsional'])) $updateData['jabatan_fungsional'] = $data['jabatan_fungsional'];
-        if (!empty($data['status_pegawai'])) $updateData['status_pegawai'] = $data['status_pegawai'];
+        if (!empty($data['unit'])) $updateData['unit'] = $data['unit'];
+        if (!empty($data['status_karyawan'])) {
+            $status = strtoupper($data['status_karyawan']);
+            if (StatusKaryawanEnum::tryFrom($status)) {
+                $updateData['status_karyawan'] = $status;
+            } else {
+                Log::warning("[TSU_SYNC_WARNING] Status Karyawan tidak valid dari SSO: " . $status);
+            }
+        }
         if (!empty($data['nik_ktp'])) $updateData['nik_ktp'] = $data['nik_ktp'];
         if (!empty($data['tempat_lahir'])) $updateData['tempat_lahir'] = $data['tempat_lahir'];
         if (!empty($data['tgl_lahir'])) $updateData['tgl_lahir'] = $data['tgl_lahir'];

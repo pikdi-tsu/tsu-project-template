@@ -66,52 +66,49 @@ class DataKaryawanController extends MiddlewareController
             })
             ->addColumn('jabatan', function($row) {
                 // Jabatan Struktural & Fungsional
-                $struktural = $row->jabatan_struktural ?? 'Tidak menjabat struktural';
+                $strukturalRaw = $row->jabatan_struktural ?? '';
+                $strukturalHtml = '';
+
+                if (empty($strukturalRaw)) {
+                    $strukturalHtml = '<div class="text-muted font-italic mb-1" style="font-size: 0.85rem;">Tidak menjabat struktural</div>';
+                } else {
+                    // Support multi-jabatan (pisahkan dengan koma)
+                    $jabatans = array_map('trim', explode(',', $strukturalRaw));
+                    foreach($jabatans as $jab) {
+                        if(!empty($jab)) {
+                            $strukturalHtml .= '<span class="badge badge-primary mr-1 mb-1 shadow-sm" style="font-weight: 500; padding: 4px 8px;">' . htmlspecialchars($jab) . '</span>';
+                        }
+                    }
+                    $strukturalHtml = '<div>' . $strukturalHtml . '</div>';
+                }
+
                 $fungsional = $row->jabatan_fungsional ?? '-';
 
-                return '<div class="font-weight-bold text-dark">' . $struktural . '</div>' .
-                    '<div class="text-muted small">Fungsional: ' . $fungsional . '</div>';
+                return $strukturalHtml .
+                    '<div class="text-muted small mt-1">Fungsional: <b>' . htmlspecialchars($fungsional) . '</b></div>';
             })
             ->addColumn('status_karyawan', function($row) {
-                if ($row->status_karyawan === 'NON-AKTIF') {
-                    return '<span class="badge badge-danger">' . $row->status_karyawan . '</span>';
+                $statusHtml = '';
+                if ($row->status_karyawan) {
+                    $statusHtml = '<span class="badge ' . $row->status_karyawan->color() . ' mb-1">' . strtoupper($row->status_karyawan->label()) . '</span><br>';
+                } else {
+                    $statusHtml = '<span class="badge badge-secondary mb-1">BELUM DISET</span><br>';
                 }
-                return '<span class="badge badge-success">' . ($row->status_karyawan) . '</span>';
+
+                if ($row->is_active == 1) {
+                    $aktifHtml = '<span class="badge badge-success px-2"><i class="fas fa-check-circle"></i> AKTIF</span>';
+                } else {
+                    $aktifHtml = '<span class="badge badge-danger px-2"><i class="fas fa-times-circle"></i> NON-AKTIF</span>';
+                }
+
+                return $statusHtml . $aktifHtml;
             })
             ->addColumn('aksi', function ($row) {
                 $showUrl = route('admin.data-karyawan.show', $row->id);
-                $editUrl = route('admin.data-karyawan.edit', $row->id);
-                $deleteUrl = route('admin.data-karyawan.destroy', $row->id);
-                $token = csrf_token();
 
                 $btnDetail = '<button type="button" class="btn btn-sm btn-info text-white mx-1 btn-modal" data-url="'.$showUrl.'" title="Detail Profil"><i class="fas fa-eye"></i></button>';
-                $btnEdit = '<button type="button" class="btn btn-sm btn-warning btn-edit text-dark mx-1" data-url="'.$editUrl.'" title="Edit Profil"><i class="fas fa-pencil-alt"></i></button>';
 
-                if ($row->status_karyawan === 'NON-AKTIF') {
-                    // JIKA NON-AKTIF: Tombol HIJAU (Nembak ke route POST 'aktifkan')
-                    $aktifkanUrl = route('admin.data-karyawan.bio-aktif', $row->id);
-                    $btnToggle = '
-                        <form action="'.$aktifkanUrl.'" method="POST" style="display:inline-block; margin: 0;" class="mx-1">
-                            <input type="hidden" name="_token" value="'.$token.'">
-                            <button type="button" class="btn btn-sm btn-success btn-toggle-status" data-action="aktifkan" data-name="'. htmlspecialchars($row->nama) .'" title="Aktifkan Karyawan">
-                                <i class="fas fa-user-check"></i>
-                            </button>
-                        </form>
-                    ';
-                } else {
-                    // JIKA AKTIF: Tombol MERAH (Nembak ke route DELETE 'destroy')
-                    $deleteUrl = route('admin.data-karyawan.destroy', $row->id);
-                    $btnToggle = '
-                        <form action="'.$deleteUrl.'" method="POST" style="display:inline-block; margin: 0;" class="mx-1">
-                            <input type="hidden" name="_token" value="'.$token.'">
-                            <input type="hidden" name="_method" value="DELETE"> <button type="button" class="btn btn-sm btn-danger btn-toggle-status" data-action="nonaktifkan" data-name="'. htmlspecialchars($row->nama) .'" title="Nonaktifkan Karyawan">
-                                <i class="fas fa-user-slash"></i>
-                            </button>
-                        </form>
-                    ';
-                }
-
-                return '<div class="d-flex justify-content-center align-items-center">' . $btnDetail . $btnEdit . $btnToggle . '</div>';
+                return '<div class="d-flex justify-content-center align-items-center">' . $btnDetail . '</div>';
             })
             ->rawColumns(['nama_lengkap', 'identitas', 'jabatan', 'status_karyawan', 'aksi'])
             ->make(true);
@@ -126,132 +123,5 @@ class DataKaryawanController extends MiddlewareController
         $formConfig = DataDosenTendik::getFormConfig();
 
         return view('admin::data-karyawan.show_modal', compact('karyawan', 'formConfig'));
-    }
-
-    /**
-     * Menampilkan Modal Form Tambah
-     */
-    public function create()
-    {
-        $this->guard('create', 'admin:data-karyawan');
-
-        $formConfig = DataDosenTendik::getFormConfig();
-
-        // Pastikan file view ini nanti dibuat ya Bosku
-        return view('admin::data-karyawan.create_modal', compact('formConfig'));
-    }
-
-    /**
-     * Menyimpan data dari Modal Form
-     */
-    public function store(Request $request)
-    {
-        $this->guardStore($request->id, 'admin:data-karyawan');
-
-        // Validasi sesuaikan dengan kebutuhan field-mu
-        $request->validate([
-            'nik'  => 'required|unique:data_dosen_tendiks,nik',
-            'nama' => 'required|string|max:255',
-        ]);
-
-        try {
-            $data = $request->all();
-
-            if (!empty($data['no_hp'])) {
-                $cleanPhone = str_replace(['+', ' '], '', trim($data['no_hp']));
-
-                if (!str_starts_with($cleanPhone, 'wa.me/')) {
-                    $data['no_hp'] = 'wa.me/' . $cleanPhone;
-                }
-            }
-
-            DataDosenTendik::create($request->all());
-
-            return back()->with('success', 'Data karyawan berhasil ditambahkan!');
-        } catch (\Exception $e) {
-            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_STORE_FAIL]', 'Gagal menyimpan data karyawan baru.', 'Gagal Create Karyawan.', $request);
-        }
-    }
-
-    /**
-     * Menampilkan Modal Form Edit
-     */
-    public function edit($id)
-    {
-        $this->guard('edit', 'admin:data-karyawan');
-
-        $formConfig = DataDosenTendik::getFormConfig();
-        $karyawan = DataDosenTendik::findOrFail($id);
-
-        return view('admin::data-karyawan.edit_modal', compact('karyawan', 'formConfig'));
-    }
-
-    /**
-     * Menyimpan update data dari Modal
-     */
-    public function update(Request $request, $id)
-    {
-        $this->guard('edit', 'admin:data-karyawan');
-
-        $karyawan = DataDosenTendik::findOrFail($id);
-
-        $request->validate([
-            'nik'  => 'required|unique:data_dosen_tendiks,nik,' . $id,
-            'nama' => 'required|string|max:255',
-        ]);
-
-        try {
-            $data = $request->except(['id', 'user_id', 'status_karyawan']);
-
-            if (!empty($data['no_hp'])) {
-                $cleanPhone = str_replace(['+', ' '], '', trim($data['no_hp']));
-                if (!str_starts_with($cleanPhone, 'wa.me/')) {
-                    $data['no_hp'] = 'wa.me/' . $cleanPhone;
-                }
-            }
-
-            $karyawan->update($data);
-
-            return back()->with('success', 'Data karyawan berhasil diperbarui!');
-        } catch (\Exception $e) {
-            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_UPD_FAIL]', 'Gagal menyimpan perubahan data karyawan.', "Gagal Update Karyawan ID: $id.", $request);
-        }
-    }
-
-    /**
-     * Menghapus Data Karyawan (Nonaktifkan)
-     */
-    public function destroy($id)
-    {
-        $this->guard('delete', 'admin:karyawan');
-        $karyawan = DataDosenTendik::findOrFail($id);
-
-        try {
-            $karyawan->update([
-                'user_id' => null,
-                'status_karyawan' => 'NON-AKTIF'
-            ]);
-            return back()->with('success', 'Data karyawan berhasil dinonaktifkan.');
-        } catch (\Exception $e) {
-            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_DEL_FAIL]', 'Gagal menonaktifkan data karyawan.', "Gagal Nonaktifkan ID: $id.");
-        }
-    }
-
-    /**
-     * Mengaktifkan Kembali Data Karyawan
-     */
-    public function bioAktif($id)
-    {
-        $this->guard('edit', 'admin:data-karyawan');
-        $karyawan = DataDosenTendik::findOrFail($id);
-
-        try {
-            $karyawan->update([
-                'status_karyawan' => 'AKTIF'
-            ]);
-            return back()->with('success', 'Mantap! Data karyawan berhasil diaktifkan kembali.');
-        } catch (\Exception $e) {
-            return TsuErrorHandlerService::handleHtml($e, '[TSU_KARYAWAN_ACT_FAIL]', 'Gagal mengaktifkan kembali data karyawan.', "Gagal Aktifkan ID: $id.");
-        }
     }
 }

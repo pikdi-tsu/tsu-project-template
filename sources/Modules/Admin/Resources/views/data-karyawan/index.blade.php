@@ -6,8 +6,8 @@
             <h3 class="card-title mr-4">Data Dosen & Tendik</h3>
 
             <div class="d-flex gap-2 ml-auto">
-                <button type="button" class="btn btn-success btn-modal btn-sm" data-url="{{ route('admin.data-karyawan.create') }}" title="Tambah Pegawai">
-                    <i class="fas fa-plus"></i> Tambah Pegawai
+                <button type="button" class="btn btn-primary btn-modal btn-sm shadow-sm" data-url="#" title="Sync Data dari HRIS">
+                    <i class="fas fa-sync-alt mr-1"></i> Sync API HRIS
                 </button>
             </div>
         </div>
@@ -19,9 +19,9 @@
                     <th width="5%" class="text-center">No</th>
                     <th width="25%">Nama Lengkap & Kontak</th>
                     <th width="15%">Identitas</th>
-                    <th width="20%">Keilmuan Inti</th>
-                    <th width="25%">Jabatan</th>
-                    <th width="25%">Status</th>
+                    <th width="20%">Jabatan</th>
+                    <th width="15%">Unit</th>
+                    <th width="10%">Status & Akun</th>
                     <th width="10%" class="text-center">Aksi</th>
                 </tr>
                 </thead>
@@ -52,8 +52,8 @@
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
                 {data: 'nama_lengkap', name: 'nama'},
                 {data: 'identitas', name: 'nik'}, // Bisa ditambah name: 'nidn' di backend kalau mau multi-search
-                {data: 'keilmuan_inti', name: 'keilmuan_inti', defaultContent: '-'}, // Langsung tarik dari DB
                 {data: 'jabatan', name: 'jabatan_struktural'},
+                {data: 'unit', name: 'unit', defaultContent: '-'}, // Langsung tarik dari DB
                 {data: 'status_karyawan', name: 'status_karyawan'},
                 {data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center'},
             ]
@@ -124,44 +124,6 @@
             });
         });
 
-        // Logic aktif dan non-aktif data
-        $('body').on('click', '.btn-toggle-status', function(e) {
-            e.preventDefault();
 
-            var form = $(this).closest('form');
-            var name = $(this).data('name');
-            var action = $(this).data('action'); // Bakal otomatis baca 'aktifkan' atau 'nonaktifkan' dari tombol
-
-            // Setting dinamis berdasarkan tombol apa yang diklik
-            var titleTxt = action === 'aktifkan' ? 'Aktifkan Karyawan?' : 'Nonaktifkan Pegawai?';
-            var htmlTxt  = action === 'aktifkan'
-                ? "Anda akan mengaktifkan kembali status pegawai: <b>" + name + "</b>.<br><small class='text-success'>Karyawan akan kembali aktif di sistem HRIS.</small>"
-                : "Anda akan menonaktifkan status pegawai: <b>" + name + "</b>.<br><small class='text-warning'>Data tidak dihapus, namun akun SSO akan diputus.</small>";
-            var iconBtn  = action === 'aktifkan' ? '<i class="fas fa-user-check"></i> Ya, Aktifkan!' : '<i class="fas fa-user-slash"></i> Ya, Nonaktifkan!';
-            var colorBtn = action === 'aktifkan' ? '#28a745' : '#d33'; // Hijau untuk aktif, Merah untuk nonaktif
-
-            Swal.fire({
-                title: titleTxt,
-                html: htmlTxt,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: colorBtn,
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: iconBtn,
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Memproses...',
-                        text: 'Sedang mengubah status karyawan...',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading() }
-                    });
-
-                    // Tembak formnya ke Controller!
-                    form.submit();
-                }
-            });
-        });
     </script>
 @endsection
