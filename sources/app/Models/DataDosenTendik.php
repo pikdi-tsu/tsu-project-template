@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Enums\StatusKaryawanEnum;
 
 class DataDosenTendik extends Authenticatable
 {
@@ -19,6 +21,7 @@ class DataDosenTendik extends Authenticatable
 
     protected $casts = [
         'tgl_lahir' => 'date',
+        'status_karyawan' => StatusKaryawanEnum::class,
     ];
 
     public function getTable()
@@ -29,6 +32,18 @@ class DataDosenTendik extends Authenticatable
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    protected function namaLengkap(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                $depan = !empty($attributes['gelar_depan']) ? trim($attributes['gelar_depan']) . ' ' : '';
+                $belakang = !empty($attributes['gelar_belakang']) ? ', ' . trim($attributes['gelar_belakang']) : '';
+                
+                return $depan . $attributes['nama'] . $belakang;
+            },
+        );
     }
 
     public static function getFormConfig()
@@ -48,8 +63,9 @@ class DataDosenTendik extends Authenticatable
                     ['name' => 'nidn', 'label' => 'NIDN', 'type' => 'text', 'col_size' => 6],
                     ['name' => 'nuptk', 'label' => 'NUPTK', 'type' => 'text', 'col_size' => 6],
 
-                    ['name' => 'keilmuan_inti', 'label' => 'Keilmuan Inti', 'type' => 'text', 'col_size' => 6],
-                    ['name' => 'status_karyawan', 'label' => 'Status Karyawan', 'type' => 'text', 'col_size' => 6, 'readonly' => true, 'default' => 'AKTIF'],
+                    ['name' => 'unit', 'label' => 'Unit / Departemen', 'type' => 'text', 'col_size' => 6],
+                    ['name' => 'status_karyawan', 'label' => 'Status Kepegawaian', 'type' => 'text', 'col_size' => 6, 'readonly' => true],
+                    ['name' => 'is_active', 'label' => 'Akun Aktif', 'type' => 'select', 'col_size' => 12, 'options' => [1 => 'AKTIF', 0 => 'NON-AKTIF'], 'readonly' => true],
                 ]
             ],
 

@@ -42,9 +42,14 @@
 
                                     if ($value instanceof \DateTimeInterface) {
                                         $value = tglIndo($value);
+                                    } elseif ($value instanceof \BackedEnum) {
+                                        $value = method_exists($value, 'label') ? strtoupper($value->label()) : $value->value;
                                     }
 
-                                    $isEmpty = is_null($value) || $value === '' || $value === '0' || $value === '-';
+                                    $isEmpty = is_null($value) || $value === '' || $value === '-';
+                                    if ($field['name'] !== 'is_active' && $value === '0') {
+                                        $isEmpty = true;
+                                    }
 
                                     $valStr = trim((string)$value);
 
@@ -57,7 +62,8 @@
                                     $isUrl = !$isEmpty && !$isWa && (str_starts_with($valStr, 'http://') || str_starts_with($valStr, 'https://'));
 
                                     // 3. Deteksi Status & Tab
-                                    $isStatus = in_array($field['name'], ['status_karyawan', 'status_pegawai']);
+                                    $isStatus = in_array($field['name'], ['status_karyawan']);
+                                    $isActiveBadge = in_array($field['name'], ['is_active']);
                                     $isDokumenTab = $tabKey === 'tab_dokumen';
                                 @endphp
 
@@ -114,10 +120,23 @@
                                                         </a>
 
                                                     @elseif($isStatus)
-                                                        @if(strtolower($value) === 'aktif')
+                                                        @php
+                                                            $rawValue = $karyawan->{$field['name']};
+                                                            $badgeColor = 'badge-secondary';
+                                                            
+                                                            if ($rawValue instanceof \BackedEnum && method_exists($rawValue, 'color')) {
+                                                                $badgeColor = $rawValue->color();
+                                                            } elseif ($rawValue) {
+                                                                $badgeColor = 'badge-info'; // Fallback jika bukan enum tapi ada nilainya
+                                                            }
+                                                        @endphp
+                                                        <span class="badge {{ $badgeColor }} px-3 py-1 shadow-sm">{{ strtoupper($value) }}</span>
+
+                                                    @elseif($isActiveBadge)
+                                                        @if($value == 1)
                                                             <span class="badge badge-success px-3 py-1 shadow-sm"><i class="fas fa-check-circle mr-1"></i> AKTIF</span>
                                                         @else
-                                                            <span class="badge badge-danger px-3 py-1 shadow-sm"><i class="fas fa-times-circle mr-1"></i> {{ strtoupper($value) }}</span>
+                                                            <span class="badge badge-danger px-3 py-1 shadow-sm"><i class="fas fa-times-circle mr-1"></i> NON-AKTIF</span>
                                                         @endif
 
                                                     @else
