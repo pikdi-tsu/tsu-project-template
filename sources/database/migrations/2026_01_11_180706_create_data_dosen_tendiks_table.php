@@ -43,7 +43,7 @@ return new class extends Migration
             $table->string('unit')->nullable();
 
             // DATA STATUS KEPEGAWAIAN
-            $table->string('status_karyawan', 50)->nullable()->comment('TETAP, KONTRAK, LB, DLL');
+            $table->string('status_karyawan', 50)->nullable()->comment('TETAP dan KONTRAK');
             $table->tinyInteger('is_active')->default(1)->comment('1=Aktif, 0=Non-Aktif');
 
             $table->timestamps();
