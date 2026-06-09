@@ -65,27 +65,57 @@ class DataKaryawanController extends MiddlewareController
                 return $nik . $nidn;
             })
             ->addColumn('jabatan', function($row) {
-                // Jabatan Struktural & Fungsional
+                // LOGIC JABATAN STRUKTURAL
                 $strukturalRaw = $row->jabatan_struktural ?? '';
-                $strukturalHtml = '';
-
-                if (empty($strukturalRaw)) {
-                    $strukturalHtml = '<div class="text-muted font-italic mb-1" style="font-size: 0.85rem;">Tidak menjabat struktural</div>';
+                $jabatansStr = array_filter(array_map('trim', explode(',', $strukturalRaw)));
+                
+                if (empty($jabatansStr)) {
+                    $htmlStruktural = '
+                        <div class="d-flex align-items-center mb-1 text-muted">
+                            <div class="bg-light rounded-circle mr-2 d-flex justify-content-center align-items-center border shadow-sm" style="width: 24px; height: 24px; min-width: 24px;">
+                                <i class="fas fa-minus text-muted" style="font-size: 0.65rem;"></i>
+                            </div>
+                            <span class="font-italic" style="font-size: 0.85rem;">Tidak ada struktural</span>
+                        </div>';
                 } else {
-                    // Support multi-jabatan (pisahkan dengan koma)
-                    $jabatans = array_map('trim', explode(',', $strukturalRaw));
-                    foreach($jabatans as $jab) {
-                        if(!empty($jab)) {
-                            $strukturalHtml .= '<span class="badge badge-primary mr-1 mb-1 shadow-sm" style="font-weight: 500; padding: 4px 8px;">' . htmlspecialchars($jab) . '</span>';
-                        }
+                    $htmlStruktural = '';
+                    foreach($jabatansStr as $jab) {
+                        $htmlStruktural .= '
+                        <div class="d-flex align-items-center mb-1">
+                            <div class="bg-dark rounded-circle mr-2 d-flex justify-content-center align-items-center shadow-sm" style="width: 24px; height: 24px; min-width: 24px;">
+                                <i class="fas fa-briefcase text-white" style="font-size: 0.65rem;"></i>
+                            </div>
+                            <span class="font-weight-bold text-dark" style="font-size: 0.9rem; line-height: 1.2;">'.htmlspecialchars($jab).'</span>
+                        </div>';
                     }
-                    $strukturalHtml = '<div>' . $strukturalHtml . '</div>';
                 }
 
-                $fungsional = $row->jabatan_fungsional ?? '-';
+                // LOGIC JABATAN FUNGSIONAL
+                $fungsionalRaw = $row->jabatan_fungsional ?? '';
+                $jabatansFung = array_filter(array_map('trim', explode(',', $fungsionalRaw)));
+                
+                if (empty($jabatansFung)) {
+                    $htmlFungsional = '
+                        <div class="d-flex align-items-center mt-2 text-muted">
+                            <div class="bg-light rounded-circle mr-2 d-flex justify-content-center align-items-center border shadow-sm" style="width: 24px; height: 24px; min-width: 24px;">
+                                <i class="fas fa-minus text-muted" style="font-size: 0.65rem;"></i>
+                            </div>
+                            <span class="font-italic" style="font-size: 0.85rem;">Tidak ada fungsional</span>
+                        </div>';
+                } else {
+                    $htmlFungsional = '';
+                    foreach($jabatansFung as $jabFung) {
+                        $htmlFungsional .= '
+                        <div class="d-flex align-items-center mt-2">
+                            <div class="bg-info rounded-circle mr-2 d-flex justify-content-center align-items-center shadow-sm" style="width: 24px; height: 24px; min-width: 24px;">
+                                <i class="fas fa-medal text-white" style="font-size: 0.65rem;"></i>
+                            </div>
+                            <span class="font-weight-bold text-info" style="font-size: 0.85rem; line-height: 1.2;">'.htmlspecialchars($jabFung).'</span>
+                        </div>';
+                    }
+                }
 
-                return $strukturalHtml .
-                    '<div class="text-muted small mt-1">Fungsional: <b>' . htmlspecialchars($fungsional) . '</b></div>';
+                return $htmlStruktural . $htmlFungsional;
             })
             ->addColumn('status_karyawan', function($row) {
                 $statusHtml = '';
