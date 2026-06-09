@@ -138,6 +138,16 @@
                                                         @else
                                                             <span class="badge badge-danger px-3 py-1 shadow-sm"><i class="fas fa-times-circle mr-1"></i> NON-AKTIF</span>
                                                         @endif
+                                                        
+                                                    @elseif($field['name'] === 'jabatan_struktural')
+                                                        @php
+                                                            $jabatans = explode(',', $value);
+                                                        @endphp
+                                                        @foreach($jabatans as $jab)
+                                                            @if(trim($jab))
+                                                                <span class="badge badge-dark px-2 py-1 mb-1 shadow-sm mr-1" style="font-size: 0.85rem;"><i class="fas fa-briefcase mr-1"></i> {{ trim($jab) }}</span>
+                                                            @endif
+                                                        @endforeach
 
                                                     @else
                                                         {{ $value }}
