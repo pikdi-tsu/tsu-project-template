@@ -87,6 +87,12 @@ class EmergencyLoginController extends Controller
                 $profil = DataMahasiswa::query()->where('user_id', $user->id)->first();
             } elseif (in_array($finalRole, ['dosen', 'tendik', 'admin prodi'])) {
                 $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
+                
+                // BLOKIR LOGIN JIKA STATUS KARYAWAN NON-AKTIF
+                if ($profil && $profil->is_active == 0) {
+                    Auth::logout();
+                    throw new \Exception('[TSU_DENIED_ACCESS] Login Ditolak! Akun kepegawaian Anda telah dinonaktifkan.');
+                }
             }
 
             // SIMPAN SESSION
@@ -220,6 +226,17 @@ class EmergencyLoginController extends Controller
                 'message' => 'Silahkan hubungi Admin untuk memperbaiki masalah ini.',
                 'code' => 404
             ], 404);
+        }
+
+        // Cek jika dia punya profil dosen/tendik yang non-aktif (Proteksi Ekstra Rescue Login)
+        if ($user->hasRole(['dosen', 'tendik'])) {
+            $profil = DataDosenTendik::query()->where('user_id', $user->id)->first();
+            if ($profil && $profil->is_active == 0) {
+                return back()
+                    ->with('error', '<b>Akses Ditolak!</b> Akun kepegawaian Anda telah dinonaktifkan.')
+                    ->withErrors(['username' => 'Akun Dinonaktifkan'])
+                    ->withInput(request()->only('username'));
+            }
         }
 
         // LOGIN PAKSA
