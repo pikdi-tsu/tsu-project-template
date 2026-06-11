@@ -56,7 +56,8 @@ return [
         'password' => env('MODULE_FULL_NAME', 'tsu_template'),
         'key' => [
             'emergency' => env('PIKDI_EMERGENCY_SECRET', 'pikdiemergency@TSU25'),
-            'rescue' => env('PIKDI_RESCUE_SECRET')
+            'rescue' => env('PIKDI_RESCUE_SECRET'),
+            'sync' => env('PIKDI_SYNC_SECRET'),
         ],
     ],
 
