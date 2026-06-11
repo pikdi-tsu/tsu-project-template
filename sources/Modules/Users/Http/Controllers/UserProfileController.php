@@ -8,6 +8,7 @@ use App\Services\TsuErrorHandlerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class UserProfileController extends Controller
 {
@@ -72,7 +73,7 @@ class UserProfileController extends Controller
                 throw new \Exception('[TSU_SESSION_EXPIRED] Sesi kadaluarsa. Silakan login ulang.');
             }
 
-            $response = Http::acceptJson()->withoutVerifying()->withToken($token)
+            $response = Http::acceptJson()->withoutVerifying()->withHeaders(['X-Sync-Secret' => config('app.pikdi.key.sync')])->withToken($token)
                 ->post(config('app.tsu_homebase.url') . '/api/v1/profile/change-password', [
                     'current_password'          => $request->current_password,
                     'password'              => $request->password,
@@ -109,7 +110,7 @@ class UserProfileController extends Controller
             $file  = $request->file('photoprofile');
             $token = session('homebase_access_token');
 
-            $response = Http::withToken($token)->acceptJson()->withoutVerifying()
+            $response = Http::withToken($token)->withHeaders(['X-Sync-Secret' => config('app.pikdi.key.sync')])->acceptJson()->withoutVerifying()
                 ->attach('photoprofile', file_get_contents($file->getRealPath()), $file->getClientOriginalName())
                 ->post(config('app.tsu_homebase.url') . '/api/v1/profile/change-photo');
 
@@ -117,8 +118,8 @@ class UserProfileController extends Controller
                 $homebaseUrl = $response->json()['data']['photo_url'];
 
                 $oldPhoto = $user->avatar_url;
-                if ($oldPhoto && !str_starts_with($oldPhoto, 'http') && \Storage::disk('public')->exists($oldPhoto)) {
-                    \Storage::disk('public')->delete($oldPhoto);
+                if ($oldPhoto && !str_starts_with($oldPhoto, 'http') && Storage::disk('public')->exists($oldPhoto)) {
+                    Storage::disk('public')->delete($oldPhoto);
                 }
 
                 User::query()->where('id', $user->id)->update(['avatar_url' => $homebaseUrl]);
