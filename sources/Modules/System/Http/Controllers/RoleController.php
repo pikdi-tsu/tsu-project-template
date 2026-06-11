@@ -130,7 +130,7 @@ class RoleController extends MiddlewareController
                 $clientSecret = config('app.oauth.client.secret');
 
                 // Ambil Token (Client Credentials)
-                $tokenResponse = Http::withoutVerifying()->asForm()->post($baseUrl . '/oauth/token', [
+                $tokenResponse = Http::withoutVerifying()->withHeaders(['X-Sync-Secret' => config('app.pikdi.key.sync')])->asForm()->post($baseUrl . '/oauth/token', [
                     'grant_type'    => 'client_credentials',
                     'client_id'     => $clientId,
                     'client_secret' => $clientSecret,
@@ -149,6 +149,7 @@ class RoleController extends MiddlewareController
 
                 // Ambil Data Role
                 $dataResponse = Http::withoutVerifying()
+                    ->withHeaders(['X-Sync-Secret' => config('app.pikdi.key.sync')])
                     ->withToken($accessToken)
                     ->timeout(10) // Jangan lama-lama nunggu
                     ->get($baseUrl . '/api/v1/roles/sync-list');
