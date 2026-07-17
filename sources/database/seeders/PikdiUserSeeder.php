@@ -47,9 +47,8 @@ class PikdiUserSeeder extends Seeder
             [
                 'nik'                => '999999', // Dummy NIK
                 'status_karyawan'    => 'TETAP',
-                'gelar_depan'        => '',
-                'gelar_belakang'     => '',
-                'jabatan_fungsional' => 'Super Admin IT',
+                'nama_lengkap'       => $name,
+                'jabatan_aktif'      => 'Super Admin IT',
                 // Field lain biarkan null/default sesuai migrasi
             ]
         );

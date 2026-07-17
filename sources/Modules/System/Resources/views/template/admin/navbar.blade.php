@@ -13,33 +13,66 @@
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
         <!-- Notifications Dropdown Menu -->
+        @php
+            $unreadCount = Auth::user()->unreadNotifications->count();
+            $notifications = Auth::user()->notifications()->latest()->take(5)->get();
+        @endphp
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
                 <i class="far fa-bell"></i>
-                {{-- Badge Jumlah Notif (Nanti dinamis, sekarang hide dulu atau kasih 0) --}}
-                {{-- <span class="badge badge-warning navbar-badge">15</span> --}}
+                <span class="badge badge-danger navbar-badge" id="main-notification-badge" style="display: {{ $unreadCount > 0 ? 'inline-block' : 'none' }};">{{ $unreadCount }}</span>
             </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                <span class="dropdown-item dropdown-header">Notifikasi Sistem</span>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" id="notification-dropdown-menu">
+                <span class="dropdown-item dropdown-header font-weight-bold bg-light text-left" id="inbox-header">
+                    <i class="fas fa-inbox mr-1"></i> Kotak Masuk (<span id="inbox-count">{{ $unreadCount }}</span> Baru)
+                </span>
                 <div class="dropdown-divider"></div>
 
-                {{-- KONDISI 1: KALAU KOSONG (Default Sekarang) --}}
-                <a href="#" class="dropdown-item text-center text-muted py-3">
-                    <i class="fas fa-check-circle mb-2" style="font-size: 1.5rem;"></i><br>
-                    Tidak ada notifikasi baru
-                </a>
+                <div id="notification-list" style="max-height: 350px; overflow-y: auto; overflow-x: hidden;">
+                    @forelse($notifications as $notification)
+                        @php
+                            $isUnread = is_null($notification->read_at);
+                            $bgColor = $isUnread ? 'bg-light' : 'bg-white';
+                            $textColor = $isUnread ? 'text-dark font-weight-bold' : 'text-muted';
+                            $data = $notification->data;
+                            $icon = $data['icon'] ?? 'fas fa-bell text-secondary';
+                            $actionText = $data['action_text'] ?? 'Detail';
+                        @endphp
+                        <a href="{{ $data['action_url'] ?? '#' }}" class="dropdown-item {{ $bgColor }} border-bottom db-notif-item" style="white-space: normal;">
+                            <div class="media">
+                                <i class="{{ $icon }} mr-3 mt-1" style="font-size: 1.2rem;"></i>
+                                <div class="media-body">
+                                    <h3 class="dropdown-item-title mb-1 {{ $textColor }}">{{ $data['title'] ?? 'Pemberitahuan Sistem' }}</h3>
+                                    <p class="text-sm {{ $textColor }} mb-1">
+                                        @if($isUnread)
+                                            <i class="fas fa-circle text-primary mr-1" style="font-size: 0.4rem; vertical-align: middle;"></i>
+                                        @endif
+                                        {{ Str::limit($data['message'] ?? '', 60) }}
+                                    </p>
+                                    @if(isset($data['download_url']))
+                                        <span class="badge badge-success mt-1"><i class="fas fa-download"></i> File Siap</span>
+                                    @elseif(isset($data['error_detail']))
+                                        <span class="badge badge-danger mt-1">Gagal</span>
+                                    @else
+                                        <span class="badge badge-primary mt-1"><i class="fas fa-arrow-right"></i> {{ $actionText }}</span>
+                                    @endif
+                                    <p class="text-xs text-muted mb-0 mt-1">
+                                        <i class="far fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                    @empty
+                        <a href="#" class="dropdown-item text-center text-muted py-3" id="empty-notif-msg">
+                            <i class="fas fa-check-circle mb-2" style="font-size: 1.5rem;"></i><br>
+                            Tidak ada notifikasi baru
+                        </a>
+                        <div class="dropdown-divider"></div>
+                    @endforelse
+                </div>
 
-                {{-- KONDISI 2: CONTOH KALAU ADA ISI (Disimpan dulu sbg komentar buat contekan) --}}
-                {{--
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-file-signature mr-2"></i> KRS Disetujui
-                    <span class="float-right text-muted text-sm">3 mins</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                --}}
-
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item dropdown-footer text-center">Lihat Semua Notifikasi</a>
+                <a href="{{ route('system.notifications.index') ?? '#' }}" class="dropdown-item dropdown-footer text-center">Lihat Semua Notifikasi</a>
             </div>
         </li>
 

@@ -22,25 +22,15 @@ return new class extends Migration
 
             // DATA KEPEGAWAIAN UTAMA
             $table->string('nik', 50)->nullable()->unique()->comment('Nomor Induk Kepegawaian Internal TSU');
-            $table->string('nidn', 50)->nullable()->unique()->comment('Nomor Induk Dosen Nasional');
-            $table->string('nip', 50)->nullable()->comment('Nomor Induk Pegawai PNS');
             
             // DATA PRIBADI
-            $table->string('gelar_depan', 20)->nullable();
-            $table->string('nama')->nullable();
-            $table->string('gelar_belakang', 50)->nullable();
+            $table->string('nama_lengkap', 255)->nullable();
             $table->string('jenis_kelamin', 20)->nullable();
             $table->string('no_hp', 25)->nullable();
             
-            // DATA JABATAN STRUKTURAL
-            $table->string('jabatan_struktural')->nullable()->comment('Dekan, Wakil Dekan, Kaprodi, dll');
-            
-            // DATA JABATAN FUNGSIONAL
-            $table->string('jabatan_fungsional')->nullable()->comment('Asisten Ahli, Lektor, dll');
-            $table->string('pangkat_jabatan_fungsional')->nullable()->comment('Pangkat Golongan');
-
-            // Department
-            $table->string('unit')->nullable();
+            // PENEMPATAN DAN PERAN
+            $table->string('unit_kerja', 255)->nullable();
+            $table->string('jabatan_aktif', 255)->nullable();
 
             // DATA STATUS KEPEGAWAIAN
             $table->string('status_karyawan', 50)->nullable()->comment('TETAP dan KONTRAK');

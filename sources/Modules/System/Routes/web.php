@@ -39,6 +39,13 @@ Route::prefix('')->group(function() {
 
         // System Navigation
         Route::prefix('system')->middleware(['auth'])->name('system.')->group(function() {
+            // Notifications
+            Route::get('notifications', [Modules\System\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+            Route::get('notifications/{id}/read', [Modules\System\Http\Controllers\NotificationController::class, 'read'])->name('notifications.read');
+            Route::post('notifications/read-all', [Modules\System\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+            Route::delete('notifications/clear', [Modules\System\Http\Controllers\NotificationController::class, 'clear'])->name('notifications.clear');
+            Route::get('notifications/backup-clear', [Modules\System\Http\Controllers\NotificationController::class, 'backupAndClear'])->name('notifications.backupClear');
+            
             // User
 //            Route::middleware(['permission:users:user:view'])->group(function() {
 //                Route::get('users/json', [UserController::class, 'datatable'])->name('user.json');
