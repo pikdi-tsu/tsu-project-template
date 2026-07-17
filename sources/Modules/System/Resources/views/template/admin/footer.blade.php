@@ -77,10 +77,10 @@
         window.Echo = new Echo({
             broadcaster: 'reverb',
             key: '{{ config('broadcasting.connections.reverb.key') }}',
-            wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
-            wsPort: {{ config('broadcasting.connections.reverb.options.port', 80) }},
-            wssPort: {{ config('broadcasting.connections.reverb.options.port', 443) }},
-            forceTLS: {{ config('broadcasting.connections.reverb.options.scheme', 'http') === 'https' ? 'true' : 'false' }},
+            wsHost: window.location.hostname,
+            wsPort: {{ config('broadcasting.connections.reverb.options.port', 8080) }},
+            wssPort: (window.location.protocol === 'https:') ? 443 : {{ config('broadcasting.connections.reverb.options.port', 8080) }},
+            forceTLS: (window.location.protocol === 'https:') ? true : false,
             enabledTransports: ['ws', 'wss'],
             auth: {
                 headers: {
@@ -181,6 +181,26 @@
                         icon: 'info',
                         title: notification.message || 'Pemberitahuan Baru'
                     });
+
+                    // 4. Universal DataTables & Tab Badge Reloader (Pencegahan Cross-Contamination)
+                    let currentUrl = window.location.href;
+                    if (notification.module && currentUrl.includes(notification.module)) {
+                        // Reload semua DataTables yang aktif di halaman ini
+                        $('.dataTable').each(function() {
+                            let tableId = $(this).attr('id');
+                            if (tableId && $.fn.DataTable.isDataTable('#' + tableId)) {
+                                $('#' + tableId).DataTable().ajax.reload(null, false);
+                            }
+                        });
+
+                        // Update Tab Badge jika target disematkan di options
+                        if (notification.options && notification.options.target_tab) {
+                            let tabBadge = $('#' + notification.options.target_tab);
+                            if (tabBadge.length) {
+                                tabBadge.text((parseInt(tabBadge.text()) || 0) + 1).show();
+                            }
+                        }
+                    }
                 });
         @endauth
     }
